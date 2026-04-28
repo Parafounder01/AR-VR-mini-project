@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Complete Electronics Lab - Transistors, Amplifiers & More</title>
+    <title>Full Electronics Lab - Filters, 555 Timer, Oscillators, AR</title>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600&family=Space+Grotesk:wght@400;600;700&display=swap');
         
@@ -19,6 +19,7 @@
             --success: #00ff88;
             --cyan: #00ddff;
             --warning: #ffaa00;
+            --orange: #ff6600;
         }
         
         * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -65,6 +66,7 @@
         }
         
         .hdr-btn.vr { background: linear-gradient(135deg, var(--accent-purple), var(--accent-magenta)); border: none; }
+        .hdr-btn.ar { background: linear-gradient(135deg, #0066aa, #00aaff); border: none; }
         
         .status { display: flex; gap: 8px; font-size: 8px; }
         
@@ -299,6 +301,39 @@
             to { opacity: 1; transform: translateX(-50%) translateY(0); }
         }
         
+        .ar-overlay {
+            position: fixed; top: 0; left: 0; right: 0; bottom: 0;
+            background: rgba(0,0,0,0.9);
+            z-index: 500;
+            display: none;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .ar-overlay.show { display: flex; }
+        
+        .ar-overlay h2 {
+            color: var(--cyan);
+            margin-bottom: 20px;
+        }
+        
+        .ar-overlay p {
+            color: var(--text-secondary);
+            margin-bottom: 10px;
+        }
+        
+        .ar-btn {
+            padding: 12px 24px;
+            background: linear-gradient(135deg, #0066aa, #00aaff);
+            border: none;
+            border-radius: 8px;
+            color: white;
+            font-size: 14px;
+            cursor: pointer;
+            margin-top: 20px;
+        }
+        
         ::-webkit-scrollbar { width: 3px; }
         ::-webkit-scrollbar-thumb { background: #333; border-radius: 2px; }
     </style>
@@ -307,11 +342,12 @@
     <canvas id="canvas"></canvas>
     
     <div class="header">
-        <div class="logo">⚡ Complete Electronics Lab</div>
+        <div class="logo">⚡ Full Electronics Lab</div>
         <div class="hdr-btns">
             <button class="hdr-btn" onclick="showHelp()">📖 Help</button>
             <button class="hdr-btn" onclick="showTheory()">📚 Theory</button>
             <button class="hdr-btn vr" onclick="enterVR()">🥽 VR</button>
+            <button class="hdr-btn ar" onclick="enterAR()">🌐 AR</button>
         </div>
         <div class="status">
             <div class="status-item">
@@ -348,14 +384,10 @@
             <div class="nm">9V</div>
         </div>
         
-        <div class="lbl">Semiconductors</div>
+        <div class="lbl">Semicon</div>
         <div class="tray-item" draggable="true" data-t="npn" data-v="100">
             <div class="ic">🔺</div>
             <div class="nm">NPN</div>
-        </div>
-        <div class="tray-item" draggable="true" data-t="pnp" data-v="100">
-            <div class="ic">🔻</div>
-            <div class="nm">PNP</div>
         </div>
         <div class="tray-item" draggable="true" data-t="diode" data-v="1">
             <div class="ic">▶</div>
@@ -365,15 +397,15 @@
             <div class="ic">◀</div>
             <div class="nm">Zener</div>
         </div>
-        <div class="tray-item" draggable="true" data-t="mosfet" data-v="1">
-            <div class="ic">⊞</div>
-            <div class="nm">MOSFET</div>
-        </div>
         
-        <div class="lbl">Amplifiers</div>
-        <div class="tray-item" draggable="true" data-t="opamp" data-v="1">
-            <div class="ic">🛢️</div>
-            <div class="nm">Op-Amp</div>
+        <div class="lbl">555 Timer</div>
+        <div class="tray-item" draggable="true" data-t="timer555" data-v="1">
+            <div class="ic">🕐</div>
+            <div class="nm">555</div>
+        </div>
+        <div class="tray-item" draggable="true" data-t="relay" data-v="1">
+            <div class="ic">🪬</div>
+            <div class="nm">Relay</div>
         </div>
     </div>
     
@@ -381,22 +413,41 @@
         <div class="sec-title">Placed</div>
         <div class="placed" id="placed"></div>
         
-        <div class="sec-title">Circuit</div>
-        <div class="ckt-grid">
-            <button class="ckt-btn active" data-c="rc">RC Filter</button>
-            <button class="ckt-btn" data-c="rl">RL Filter</button>
+        <div class="sec-title">Circuit Type</div>
+        
+        <!-- Filters -->
+        <div class="ckt-grid" style="margin-bottom: 6px;">
+            <button class="ckt-btn active" data-c="rc-low">RC Low</button>
+            <button class="ckt-btn" data-c="rc-high">RC High</button>
+            <button class="ckt-btn" data-c="bandpass">Bandpass</button>
+            <button class="ckt-btn" data-c="notch">Notch</button>
+        </div>
+        
+        <!-- 555 Timer -->
+        <div class="ckt-grid" style="margin-bottom: 6px;">
+            <button class="ckt-btn" data-c="555-astable">555 Astable</button>
+            <button class="ckt-btn" data-c="555-mono">555 Mono</button>
+        </div>
+        
+        <!-- Oscillators -->
+        <div class="ckt-grid" style="margin-bottom: 6px;">
+            <button class="ckt-btn" data-c="hartley">Hartley</button>
+            <button class="ckt-btn" data-c="colpitts">Colpitts</button>
+            <button class="ckt-btn" data-c="crystal">Crystal</button>
+        </div>
+        
+        <!-- Other -->
+        <div class="ckt-grid" style="margin-bottom: 10px;">
             <button class="ckt-btn" data-c="charge">Charge</button>
             <button class="ckt-btn" data-c="discharge">Discharge</button>
-            <button class="ckt-btn" data-c="ce">NPN CE</button>
-            <button class="ckt-btn" data-c="cb">NPN CB</button>
-            <button class="ckt-btn" data-c="cc">NPN CC</button>
-            <button class="ckt-btn" data-c="emitter">Emitter</button>
-            <button class="ckt-btn" data-c="diode-clipper">Clipper</button>
-            <button class="ckt-btn" data-c="zener-reg">Zener Reg</button>
+            <button class="ckt-btn" data-c="zener-reg">Zener</button>
             <button class="ckt-btn" data-c="rectifier">Rectifier</button>
-            <button class="ckt-btn" data-c="amp-noninv">Op-Amp</button>
-            <button class="ckt-btn" data-c="integrator">Integrator</button>
-            <button class="ckt-btn" data-c="differentiator">Differentiator</button>
+        </div>
+        
+        <!-- Transistor -->
+        <div class="ckt-grid" style="margin-bottom: 10px;">
+            <button class="ckt-btn" data-c="ce">NPN CE</button>
+            <button class="ckt-btn" data-c="emitter">Emitter</button>
         </div>
         
         <div class="sec-title">Values</div>
@@ -412,30 +463,40 @@
         </div>
         
         <div class="slider">
+            <div class="slider-row"><span>L</span><span class="v" id="l-disp">10mH</span></div>
+            <input type="range" id="l-sld" min="1" max="100" value="10">
+        </div>
+        
+        <div class="slider">
             <div class="slider-row"><span>Vcc</span><span class="v" id="v-disp">9V</span></div>
             <input type="range" id="v-sld" min="3" max="24" value="9">
         </div>
         
         <div class="slider">
-            <div class="slider-row"><span>Hfe</span><span class="v" id="h-disp">100</span></div>
-            <input type="range" id="h-sld" min="20" max="300" value="100">
+            <div class="slider-row"><span>R1</span><span class="v" id="r1-disp">10K</span></div>
+            <input type="range" id="r1-sld" min="1" max="100" value="10">
+        </div>
+        
+        <div class="slider">
+            <div class="slider-row"><span>R2</span><span class="v" id="r2-disp">10K</span></div>
+            <input type="range" id="r2-sld" min="1" max="100" value="10">
         </div>
         
         <div class="results">
-            <div class="result"><span class="l">τ/β</span><span class="v" id="tau"></span></div>
-            <div class="result"><span class="l">fc/fr</span><span class="v" id="fc"></span></div>
-            <div class="result"><span class="l">Gain</span><span class="v" id="gain"></span></div>
-            <div class="result"><span class="l">Vout</span><span class="v" id="vout"></span></div>
+            <div class="result"><span class="l">τ/fc/fr</span><span class="v" id="res1">--</span></div>
+            <div class="result"><span class="l">Duty/Ton</span><span class="v" id="res2">--</span></div>
+            <div class="result"><span class="l">Freq</span><span class="v" id="res3">--</span></div>
+            <div class="result"><span class="l">Vout</span><span class="v" id="res4">--</span></div>
         </div>
         
-        <button class="run-btn" id="run" disabled onclick="toggleSim()">▶ Run</button>
+        <button class="run-btn" id="run" disabled onclick="toggleSim()">▶ Run Simulation</button>
     </div>
     
     <div class="meters">
         <div class="meter" id="m-v"><div class="lb">Vout</div><div class="val" id="v-val">0V</div></div>
-        <div class="meter" id="m-i"><div class="lb">Iout</div><div class="val" id="i-val">0mA</div></div>
-        <div class="meter" id="m-g"><div class="lb">Gain</div><div class="val" id="g-val">--</div></div>
-        <div class="meter" id="m-p"><div class="lb">Freq</div><div class="val" id="f-val">0Hz</div></div>
+        <div class="meter" id="m-t"><div class="lb">Ton</div><div class="val" id="t-val">0ms</div></div>
+        <div class="meter" id="m-f"><div class="lb">Freq</div><div class="val" id="f-val">0Hz</div></div>
+        <div class="meter" id="m-d"><div class="lb">Duty</div><div class="val" id="d-val">--</div></div>
     </div>
     
     <div class="cro-panel">
@@ -447,14 +508,28 @@
         <div class="instr-item"><span class="key">Drag</span> Build</div>
         <div class="instr-item"><span class="key">Right</span> Rotate</div>
         <div class="instr-item"><span class="key">Scroll</span> Zoom</div>
+        <div class="instr-item"><span class="key">AR</span> QuestPassthrough</div>
     </div>
     
     <div class="toast" id="toast"></div>
+    
+    <!-- AR Overlay -->
+    <div class="ar-overlay" id="ar-overlay">
+        <h2>🌐 AR Passthrough Mode</h2>
+        <p>Enable camera to see real world with virtual lab overlay</p>
+        <p>Quest 3 supports WebXR AR with passthrough</p>
+        <button class="ar-btn" onclick="startAR()">Start AR Session</button>
+        <p style="margin-top: 20px; font-size: 9px;">(Opens in Quest browser with camera access)</p>
+    </div>
 
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
     <script>
         // STATE
-        const S = { ckt: 'rc', run: false, R: 10000, C: 0.000001, Vcc: 9, Hfe: 100, placed: [] };
+        const S = { 
+            ckt: 'rc-low', run: false, 
+            R: 10000, C: 0.000001, L: 0.01, Vcc: 9, R1: 10000, R2: 10000,
+            placed: [], time: 0
+        };
         
         // THREE
         let scn, cam, rdr, board, ray, mse, drg = false, lx = 0, ly = 0, ca = 0, ch = 8, cd = 14, objs = [];
@@ -464,23 +539,23 @@
             scn.background = new THREE.Color(0x0a0a0f);
             scn.fog = new THREE.Fog(0x0a0a0f, 15, 40);
             
-            cam = new THREE.PerspectiveCamera(60, w() / h(), 0.1, 100);
-            cam.pos = new THREE.Vector3(0, 10, 14);
+            cam = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 0.1, 100);
+            cam.position.set(0, 10, 14);
             cam.lookAt(0, 0, 0);
             
-            rdr = new THREE.WebGLRenderer({ c: document.getElementById('canvas'), antialias: true });
-            rdr.setSize(w(), h());
-            rdr.setPixelRatio(Math.min(devicePixelRatio, 2));
+            rdr = new THREE.WebGLRenderer({ canvas: document.getElementById('canvas'), antialias: true });
+            rdr.setSize(window.innerWidth, window.innerHeight);
+            rdr.setPixelRatio(Math.min(window.devicePixelRatio, 2));
             rdr.shadowMap.enabled = true;
             
             // Lights
             scn.add(new THREE.AmbientLight(0x404060, 0.6));
-            const ml = new THREE.DirectionalLight 0xffffff, 0.8);
-            ml.pos.set(5, 15, 10);
+            const ml = new THREE.DirectionalLight(0xffffff, 0.8);
+            ml.position.set(5, 15, 10);
             ml.castShadow = true;
             scn.add(ml);
-            scn.add(new THREE.PointLight(0x831C91, 0.4, 20).pos.set(-5, 5, -5));
-            scn.add(new THREE.PointLight(0xFF70BF, 0.3, 15).pos.set(5, 3, 5));
+            scn.add(new THREE.PointLight(0x831C91, 0.4, 20));
+            scn.add(new THREE.PointLight(0xFF70BF, 0.3, 15));
             
             // Grid
             scn.add(new THREE.GridHelper(30, 30, 0x2a2a35, 0x1a1a25));
@@ -500,60 +575,55 @@
             ui();
         }
         
-        function w() { return innerWidth; }
-        function h() { return innerHeight; }
-        
         function createTable() {
             const t = new THREE.Mesh(new THREE.BoxGeometry(5, 0.15, 3.5), new THREE.MeshStandardMaterial({ color: 0x1a1a25, roughness: 0.3, metalness: 0.7 }));
-            t.pos.y = 1;
+            t.position.y = 1;
             scn.add(t);
             
             [[-2.2, 0.5, -1.5], [2.2, 0.5, -1.5], [-2.2, 0.5, 1.5], [2.2, 0.5, 1.5]].forEach(p => {
                 const l = new THREE.Mesh(new THREE.CylinderGeometry(0.06, 0.06, 1, 8), new THREE.MeshStandardMaterial({ color: 0x2a2a35, metalness: 0.8 }));
-                l.pos.set(...p);
+                l.position.set(...p);
                 scn.add(l);
             });
             
             // Label
-            const c = dc();
-            c.width = 400; c.height = 60;
+            const c = document.createElement('canvas');
+            c.width = 400; c.height = 50;
             const ctx = c.getContext('2d');
             ctx.fillStyle = '#831C91';
-            ctx.fillRect(0, 0, 400, 60);
+            ctx.fillRect(0, 0, 400, 50);
             ctx.fillStyle = '#FF70BF';
-            ctx.font = 'bold 24px monospace';
+            ctx.font = 'bold 20px monospace';
             ctx.textAlign = 'center';
-            ctx.fillText('COMPLETE ELECTRONICS LAB', 200, 40);
+            ctx.fillText('FULL ELECTRONICS LAB', 200, 35);
             
-            const lb = new THREE.Mesh(new THREE.PlaneGeometry(3.5, 0.5), new THREE.MeshBasicMaterial({ map: new THREE.CanvasTexture(c), transparent: true }));
-            lb.pos.set(0, 1.5, -1.55);
+            const lb = new THREE.Mesh(new THREE.PlaneGeometry(3.5, 0.4), new THREE.MeshBasicMaterial({ map: new THREE.CanvasTexture(c), transparent: true }));
+            lb.position.set(0, 1.5, -1.55);
             lb.rotation.x = -0.3;
             scn.add(lb);
         }
         
-        function dc() { return document.createElement('canvas'); }
-        
         function createBoard() {
             board = new THREE.Mesh(new THREE.BoxGeometry(3, 0.12, 2), new THREE.MeshStandardMaterial({ color: 0x1a1a25, roughness: 0.4, metalness: 0.5 }));
-            board.pos.set(0, 1.12, 0);
+            board.position.set(0, 1.12, 0);
             board.name = 'board';
             scn.add(board);
             
-            // Power rails
+            // Rails
             const rr = new THREE.Mesh(new THREE.BoxGeometry(3, 0.08, 0.12), new THREE.MeshStandardMaterial({ color: 0xcc2222 }));
-            rr.pos.set(0, 1.18, -0.85);
+            rr.position.set(0, 1.18, -0.85);
             scn.add(rr);
             
             const br = new THREE.Mesh(new THREE.BoxGeometry(3, 0.08, 0.12), new THREE.MeshStandardMaterial({ color: 0x2222cc }));
-            br.pos.set(0, 1.18, 0.85);
+            br.position.set(0, 1.18, 0.85);
             scn.add(br);
         }
         
         function comp3D(t, v) {
             const g = new THREE.Group();
-            g.ud = { t, v };
+            g.userData = { t, v };
             
-            const cols = { resistor: 0xd552a3, capacitor: 0x462c7d, inductor: 0x46a7d7, led: 0xff3333, battery: 0x22aa22, npn: 0x228822, pnp: 0x882288, diode: 0xffaa00, zener: 0xaa44aa, mosfet: 0x444488, opamp: 0x448844 };
+            const cols = { resistor: 0xd552a3, capacitor: 0x462c7d, inductor: 0x46a7d7, led: 0xff3333, battery: 0x22aa22, npn: 0x228822, diode: 0xffaa00, zener: 0xaa44aa, timer555: 0x44aa44, relay: 0x884422 };
             const m = new THREE.MeshStandardMaterial({ color: cols[t] || 0x831c91, roughness: 0.4, metalness: 0.6 });
             
             switch(t) {
@@ -564,7 +634,7 @@
                     [0x8B4513, 0xFF8C00, 0xFFD700].forEach((c, i) => {
                         const bn = new THREE.Mesh(new THREE.CylinderGeometry(0.052, 0.052, 0.025, 12), new THREE.MeshStandardMaterial({ color: c }));
                         bn.rotation.z = Math.PI / 2;
-                        bn.pos.x = -0.08 + i * 0.05;
+                        bn.position.x = -0.08 + i * 0.05;
                         g.add(bn);
                     });
                     break;
@@ -590,10 +660,9 @@
                     
                 case 'npn':
                     g.add(new THREE.Mesh(new THREE.BoxGeometry(0.2, 0.15, 0.1), m));
-                    // Leads
                     ['e','b','c'].forEach((l, i) => {
                         const lead = new THREE.Mesh(new THREE.CylinderGeometry(0.015, 0.015, 0.1, 8), new THREE.MeshStandardMaterial({ color: 0x888888 }));
-                        lead.pos.set(-0.07 + i * 0.07, 0, 0.08);
+                        lead.position.set(-0.07 + i * 0.07, 0, 0.08);
                         g.add(lead);
                     });
                     break;
@@ -606,15 +675,25 @@
                     g.add(new THREE.Mesh(new THREE.CylinderGeometry(0.04, 0.04, 0.15, 12), m));
                     break;
                     
-                case 'opamp':
-                    const pkg = new THREE.Mesh(new THREE.BoxGeometry(0.3, 0.1, 0.2), m);
+                case 'timer555':
+                    const pkg = new THREE.Mesh(new THREE.BoxGeometry(0.35, 0.12, 0.25), m);
                     g.add(pkg);
                     // Pins
-                    for (let i = 0; i < 3; i++) {
+                    for (let i = 0; i < 8; i++) {
                         const pin = new THREE.Mesh(new THREE.CylinderGeometry(0.012, 0.012, 0.06, 8), new THREE.MeshStandardMaterial({ color: 0x888888 }));
-                        pin.pos.set(-0.1 + i * 0.1, 0, 0.13);
+                        if (i < 4) pin.position.set(-0.12 + i * 0.08, 0, -0.18);
+                        else pin.position.set(-0.12 + (i-4) * 0.08, 0, 0.18);
                         g.add(pin);
                     }
+                    break;
+                    
+                case 'relay':
+                    const rbody = new THREE.Mesh(new THREE.BoxGeometry(0.25, 0.2, 0.2), m);
+                    g.add(rbody);
+                    const coil = new THREE.Mesh(new THREE.CylinderGeometry(0.03, 0.03, 0.15, 8), new THREE.MeshStandardMaterial({ color: 0xaa6622 }));
+                    coil.rotation.z = Math.PI / 2;
+                    coil.position.x = -0.18;
+                    g.add(coil);
                     break;
                     
                 default:
@@ -630,10 +709,10 @@
         function place(t, v, x, z) {
             if (!canP(x, z)) { show('Place on breadboard'); return false; }
             for (const o of objs) {
-                if (Math.sqrt((o.pos.x - x)**2 + (o.pos.z - z)**2) < 0.22) { show('Too close'); return false; }
+                if (Math.sqrt((o.position.x - x)**2 + (o.position.z - z)**2) < 0.22) { show('Too close'); return false; }
             }
             const o = comp3D(t, v);
-            o.pos.set(x, 1.25, z);
+            o.position.set(x, 1.25, z);
             scn.add(o);
             objs.push(o);
             S.placed.push({ t, v, x, z });
@@ -649,25 +728,43 @@
             ui();
         }
         
-        // CALC
+        // CALCULATIONS
         function calc() {
-            const R = S.R, C = S.C, V = S.Vcc, H = S.Hfe;
-            const tauRC = R * C;
+            const R = S.R, C = S.C, L = S.L, V = S.Vcc, R1 = S.R1, R2 = S.R2;
+            
+            // RC
+            const tau = R * C;
             const fc = 1 / (2 * Math.PI * R * C);
-            const vb = V * R / (R + R);
-            const ic = (V - 0.7) / R;
-            const gain = H;
-            const vout = vb;
-            return { R, C, V, H, tauRC, fc, vb, ic, gain, vout };
+            
+            // Bandpass center
+            const fc1 = 1 / (2 * Math.PI * R * C);
+            const fc2 = R / (2 * Math.PI * L);
+            
+            // 555 Astable
+            const Ra = R1, Rb = R2;
+            const T = 0.693 * (Ra + 2 * Rb) * C;
+            const ton = 0.693 * Rb * C;
+            const duty = (Ra + 2 * Rb) > 0 ? (Rb / (Ra + 2 * Rb)) * 100 : 50;
+            const f = 1 / T;
+            
+            // 555 Monostable
+            const Tmono = 1.1 * R * C;
+            
+            // Hartley oscillator
+            const fhart = 1 / (2 * Math.PI * Math.sqrt(L * C));
+            
+            // Colpitts
+            const fcolp = 1 / (2 * Math.PI * Math.sqrt(C * L / 2));
+            
+            return { R, C, L, V, R1, R2, tau, fc, f, T, ton, duty, Tmono, fhart, fcolp };
         }
         
         function canRun() {
             const ts = S.placed.map(p => p.t);
-            if (['ce','cb','cc','emitter'].some(c => S.ckt === c)) return ts.includes('npn') && ts.includes('resistor');
-            if (S.ckt === 'zener-reg') return ts.includes('zener') && ts.includes('resistor');
-            if (S.ckt === 'rectifier') return ts.includes('diode');
-            if (S.ckt === 'amp-noninv' || S.ckt === 'integrator' || S.ckt === 'differentiator') return ts.includes('opamp');
-            return ts.includes('resistor') && (ts.includes('capacitor') || ts.includes('battery'));
+            if (['555-astable', '555-mono'].includes(S.ckt)) return ts.includes('timer555');
+            if (['hartley', 'colpitts', 'crystal'].includes(S.ckt)) return ts.includes('inductor') || ts.includes('capacitor');
+            if (['bandpass', 'notch'].includes(S.ckt)) return ts.includes('capacitor') && ts.includes('inductor');
+            return true;
         }
         
         function toggleSim() {
@@ -682,45 +779,45 @@
             document.getElementById('sim').classList.add('on');
             document.getElementById('simTxt').textContent = 'Run';
             
-            const led = objs.find(o => o.ud.t === 'led');
+            const led = objs.find(o => o.userData.t === 'led');
             if (led?.children[0]) led.children[0].material.emissiveIntensity = 1;
             
             const r = calc();
-            document.getElementById('v-val').textContent = r.vout.toFixed(2) + 'V';
-            document.getElementById('i-val').textContent = (r.ic * 1000).toFixed(2) + 'mA';
-            document.getElementById('g-val').textContent = r.gain;
-            document.getElementById('f-val').textContent = r.fc.toFixed(1) + 'Hz';
+            document.getElementById('v-val').textContent = r.V.toFixed(1) + 'V';
+            document.getElementById('t-val').textContent = (r.T * 1000).toFixed(2) + 'ms';
+            document.getElementById('f-val').textContent = r.f.toFixed(1) + 'Hz';
+            document.getElementById('d-val').textContent = r.duty.toFixed(0) + '%';
             
-            ['m-v','m-i','m-g','m-p'].forEach(id => document.getElementById(id).classList.add('on'));
+            ['m-v','m-t','m-f','m-d'].forEach(id => document.getElementById(id).classList.add('on'));
         }
         
         function stop() {
             S.run = false;
-            document.getElementById('run').textContent = '▶ Run';
+            document.getElementById('run').textContent = '▶ Run Simulation';
             document.getElementById('pwr').classList.remove('on');
             document.getElementById('sim').classList.remove('on');
             document.getElementById('simTxt').textContent = 'Stop';
             
-            const led = objs.find(o => o.ud.t === 'led');
+            const led = objs.find(o => o.userData.t === 'led');
             if (led?.children[0]) led.children[0].material.emissiveIntensity = 0.3;
             
             document.getElementById('v-val').textContent = '0V';
-            document.getElementById('i-val').textContent = '0mA';
-            document.getElementById('g-val').textContent = '--';
+            document.getElementById('t-val').textContent = '0ms';
             document.getElementById('f-val').textContent = '0Hz';
+            document.getElementById('d-val').textContent = '--';
             
-            ['m-v','m-i','m-g','m-p'].forEach(id => document.getElementById(id).classList.remove('on'));
+            ['m-v','m-t','m-f','m-d'].forEach(id => document.getElementById(id).classList.remove('on'));
         }
         
-        // CRO
-        let croT = 0;
+        // CRO ANIMATION
+        let t = 0;
         function animateCRO() {
             const cvs = document.getElementById('cro');
             const ctx = cvs.getContext('2d');
             if (!cvs.width) { cvs.width = cvs.offsetWidth; cvs.height = cvs.offsetHeight; }
             
             const W = cvs.width, H = cvs.height;
-            croT += 0.016;
+            t += 0.016;
             
             ctx.fillStyle = '#000';
             ctx.fillRect(0, 0, W, H);
@@ -736,77 +833,103 @@
             if (S.run && canRun()) {
                 const r = calc();
                 
-                if (['charge','integrator'].includes(S.ckt)) {
-                    ctx.strokeStyle = '#ffff00';
+                if (S.ckt === '555-astable') {
+                    // 555 astable square wave
+                    ctx.strokeStyle = '#00ff88';
                     ctx.lineWidth = 2;
                     ctx.beginPath();
+                    const period = 1 / r.f;
                     for (let x = 0; x < W; x++) {
-                        const tt = (x / W) * r.tauRC * 8;
-                        const v = r.V * (1 - Math.exp(-tt / r.tauRC));
-                        const y = H - (v / r.V) * (H * 0.8) - 20;
-                        x === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y);
-                    }
-                    ctx.stroke();
-                }
-                else if (S.ckt === 'differentiator') {
-                    ctx.strokeStyle = '#00ffff';
-                    ctx.lineWidth = 2;
-                    ctx.beginPath();
-                    for (let x = 0; x < W; x++) {
-                        const tt = (x / W) * 0.01;
-                        const v = r.V * Math.exp(-tt / r.tauRC);
-                        const y = H - (v / r.V) * (H * 0.8) - 20;
-                        x === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y);
-                    }
-                    ctx.stroke();
-                }
-                else if (['ce','emitter'].includes(S.ckt)) {
-                    ctx.strokeStyle = '#00ff00';
-                    ctx.lineWidth = 2;
-                    ctx.beginPath();
-                    const base = Math.sin(croT * 5) > 0 ? r.V : 0;
-                    for (let x = 0; x < W; x++) {
-                        const y = H - (base / r.V) * (H * 0.7) - 30;
-                        x === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y);
-                    }
-                    ctx.stroke();
-                }
-                else if (['rectifier','diode-clipper'].includes(S.ckt)) {
-                    // Full wave rectification
-                    ctx.strokeStyle = '#ffaa00';
-                    ctx.lineWidth = 2;
-                    ctx.beginPath();
-                    for (let x = 0; x < W; x++) {
-                        const v = Math.abs(Math.sin((x / W) * Math.PI * 4 + croT * 3));
-                        const y = H - v * (H * 0.35) - H/2;
-                        x === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y);
-                    }
-                    ctx.stroke();
-                }
-                else if (S.ckt === 'zener-reg') {
-                    ctx.strokeStyle = '#aa44aa';
-                    ctx.lineWidth = 2;
-                    ctx.beginPath();
-                    for (let x = 0; x < W; x++) {
-                        const v = 5.1;
-                        const y = H - (v / 9) * (H * 0.8) - 20;
+                        const tt = (x / W) / period;
+                        const state = (tt % 1) < (r.duty / 100) ? 1 : 0;
+                        const y = H - state * (H * 0.7) - 30;
                         x === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y);
                     }
                     ctx.stroke();
                     
-                    ctx.fillStyle = '#aa44aa';
+                    ctx.fillStyle = '#00ff88';
                     ctx.font = '9px monospace';
-                    ctx.fillText('Zener: 5.1V', 8, 15);
+                    ctx.fillText('f = ' + r.f.toFixed(1) + 'Hz', 8, 15);
+                    ctx.fillText('Duty = ' + r.duty.toFixed(0) + '%', 8, 28);
                 }
-                else if (S.ckt === 'amp-noninv') {
-                    ctx.strokeStyle = '#00ff88';
+                else if (S.ckt === '555-mono') {
+                    // Monostable - one pulse
+                    ctx.strokeStyle = '#ffaa00';
+                    ctx.lineWidth = 2;
+                    const pw = r.Tmono * 50; // Scale for display
+                    ctx.beginPath();
+                    ctx.moveTo(20, H/2);
+                    ctx.lineTo(20, H - 30);
+                    ctx.lineTo(20 + pw, H - 30);
+                    ctx.lineTo(20 + pw, H/2);
+                    ctx.stroke();
+                    
+                    ctx.fillStyle = '#ffaa00';
+                    ctx.font = '9px monospace';
+                    ctx.fillText('T = ' + (r.Tmono * 1000).toFixed(2) + 'ms', 8, 15);
+                }
+                else if (S.ckt === 'hartley') {
+                    // Hartley - sine with growing amplitude
+                    ctx.strokeStyle = '#00ffff';
+                    ctx.lineWidth = 2;
+                    const amp = Math.min(1, t * 0.5);
+                    ctx.beginPath();
+                    for (let x = 0; x < W; x++) {
+                        const y = H/2 + Math.sin((x / W) * 8 + t * 5) * amp * H * 0.35;
+                        x === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y);
+                    }
+                    ctx.stroke();
+                    
+                    ctx.fillStyle = '#00ffff';
+                    ctx.font = '9px monospace';
+                    ctx.fillText('Hartley f = ' + r.fhart.toFixed(1) + 'Hz', 8, 15);
+                }
+                else if (S.ckt === 'colpitts') {
+                    ctx.strokeStyle = '#ff6600';
                     ctx.lineWidth = 2;
                     ctx.beginPath();
-                    const gain = 1 + (R / R);
                     for (let x = 0; x < W; x++) {
-                        const yin = Math.sin((x / W) * Math.PI * 2 + croT * 2);
-                        const yout = yin * gain;
-                        const y = H/2 - yout * (H * 0.3);
+                        const y = H/2 + Math.sin((x / W) * 6 + t * 4) * H * 0.35;
+                        x === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y);
+                    }
+                    ctx.stroke();
+                    
+                    ctx.fillStyle = '#ff6600';
+                    ctx.font = '9px monospace';
+                    ctx.fillText('Colpitts f = ' + r.fcolp.toFixed(1) + 'Hz', 8, 15);
+                }
+                else if (S.ckt === 'bandpass') {
+                    ctx.strokeStyle = '#00ff00';
+                    ctx.lineWidth = 2;
+                    ctx.beginPath();
+                    for (let x = 0; x < W; x++) {
+                        const f = (x / W) * 2000;
+                        const resp = 1 / Math.sqrt(1 + Math.pow((f - r.fc) / 100, 2));
+                        const y = H - resp * (H * 0.8) - 20;
+                        x === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y);
+                    }
+                    ctx.stroke();
+                }
+                else if (S.ckt === 'notch') {
+                    ctx.strokeStyle = '#ff4444';
+                    ctx.lineWidth = 2;
+                    ctx.beginPath();
+                    for (let x = 0; x < W; x++) {
+                        const f = (x / W) * 2000;
+                        const resp = f < 500 ? 1 : 1 - 0.8 * Math.exp(-Math.pow((f - 500) / 50, 2));
+                        const y = H - resp * (H * 0.8) - 20;
+                        x === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y);
+                    }
+                    ctx.stroke();
+                }
+                else if (S.ckt === 'charge') {
+                    ctx.strokeStyle = '#ffff00';
+                    ctx.lineWidth = 2;
+                    ctx.beginPath();
+                    for (let x = 0; x < W; x++) {
+                        const tt = (x / W) * r.tau * 10;
+                        const v = V * (1 - Math.exp(-tt / r.tau));
+                        const y = H - (v / r.V) * (H * 0.8) - 20;
                         x === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y);
                     }
                     ctx.stroke();
@@ -816,15 +939,11 @@
                     ctx.lineWidth = 2;
                     ctx.beginPath();
                     for (let x = 0; x < W; x++) {
-                        const y = H/2 + Math.sin((x / W) * Math.PI * 6 + croT * 3) * H * 0.35;
+                        const y = H/2 + Math.sin((x / W) * 6 + t * 3) * H * 0.35;
                         x === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y);
                     }
                     ctx.stroke();
                 }
-                
-                ctx.fillStyle = '#00ff00';
-                ctx.font = '9px monospace';
-                ctx.fillText('fc = ' + r.fc.toFixed(1) + 'Hz', 8, 15);
             }
             else {
                 ctx.fillStyle = '#333';
@@ -878,48 +997,60 @@
                 });
             });
             
-            document.getElementById('r-sld').addEventListener('input', e => {
-                S.R = parseInt(e.target.value) * 1000;
-                document.getElementById('r-disp').textContent = e.target.value + 'KΩ';
-                ui();
-            });
-            document.getElementById('c-sld').addEventListener('input', e => {
-                S.C = parseInt(e.target.value) * 0.000001;
-                document.getElementById('c-disp').textContent = e.target.value + 'µF';
-                ui();
-            });
-            document.getElementById('v-sld').addEventListener('input', e => {
-                S.Vcc = parseInt(e.target.value);
-                document.getElementById('v-disp').textContent = e.target.value + 'V';
-                ui();
-            });
-            document.getElementById('h-sld').addEventListener('input', e => {
-                S.Hfe = parseInt(e.target.value);
-                document.getElementById('h-disp').textContent = e.target.value;
-                ui();
-            });
+            // Sliders
+            document.getElementById('r-sld').addEventListener('input', e => { S.R = parseInt(e.target.value) * 1000; document.getElementById('r-disp').textContent = e.target.value + 'KΩ'; ui(); });
+            document.getElementById('c-sld').addEventListener('input', e => { S.C = parseInt(e.target.value) * 0.000001; document.getElementById('c-disp').textContent = e.target.value + 'µF'; ui(); });
+            document.getElementById('l-sld').addEventListener('input', e => { S.L = parseInt(e.target.value) * 0.001; document.getElementById('l-disp').textContent = e.target.value + 'mH'; ui(); });
+            document.getElementById('v-sld').addEventListener('input', e => { S.Vcc = parseInt(e.target.value); document.getElementById('v-disp').textContent = e.target.value + 'V'; ui(); });
+            document.getElementById('r1-sld').addEventListener('input', e => { S.R1 = parseInt(e.target.value) * 1000; document.getElementById('r1-disp').textContent = e.target.value + 'K'; ui(); });
+            document.getElementById('r2-sld').addEventListener('input', e => { S.R2 = parseInt(e.target.value) * 1000; document.getElementById('r2-disp').textContent = e.target.value + 'K'; ui(); });
             
             window.addEventListener('resize', () => {
-                cam.aspect = w() / h();
+                cam.aspect = innerWidth / innerHeight;
                 cam.updateProjectionMatrix();
-                rdr.setSize(w(), h());
+                rdr.setSize(innerWidth, innerHeight);
             });
         }
         
         function upCam() {
-            cam.pos.x = Math.sin(ca) * cd;
-            cam.pos.z = Math.cos(ca) * cd;
-            cam.pos.y = ch;
+            cam.position.x = Math.sin(ca) * cd;
+            cam.position.z = Math.cos(ca) * cd;
+            cam.position.y = ch;
             cam.lookAt(0, 1, 0);
         }
         
         // UI
         function ui() {
             const r = calc();
-            document.getElementById('tau').textContent = S.ckt.includes('rc') ? (r.tauRC * 1000).toFixed(1) + 'ms' : 'β=' + r.gain;
-            document.getElementById('fc').textContent = r.fc.toFixed(1) + 'Hz';
-            document.getElementById('gain').textContent = r.gain;
-            document.getElementById('vout').textContent = r.vout.toFixed(2) + 'V';
+            let s1 = '--', s2 = '--', s3 = '--', s4 = '--';
+            
+            if (['rc-low','rc-high'].includes(S.ckt)) {
+                s1 = S.ckt === 'rc-low' ? 'fc=' + r.fc.toFixed(1) + 'Hz' : 'τ=' + (r.tau * 1000).toFixed(2) + 'ms';
+            }
+            else if (S.ckt === '555-astable') {
+                s1 = 'T=' + (r.T * 1000).toFixed(2) + 'ms';
+                s2 = 'Ton=' + (r.ton * 1000).toFixed(2) + 'ms';
+                s3 = 'f=' + r.f.toFixed(1) + 'Hz';
+                s4 = r.duty.toFixed(0) + '%';
+            }
+            else if (S.ckt === '555-mono') {
+                s1 = 'T=' + (r.Tmono * 1000).toFixed(2) + 'ms';
+            }
+            else if (S.ckt === 'hartley') {
+                s1 = 'fr=' + r.fhart.toFixed(1) + 'Hz';
+            }
+            else if (S.ckt === 'colpitts') {
+                s1 = 'fr=' + r.fcolp.toFixed(1) + 'Hz';
+            }
+            else if (['bandpass','notch'].includes(S.ckt)) {
+                s1 = 'fc1=' + r.fc1.toFixed(0) + 'Hz';
+                s2 = 'fc2=' + r.fc2.toFixed(0) + 'Hz';
+            }
+            
+            document.getElementById('res1').textContent = s1;
+            document.getElementById('res2').textContent = s2;
+            document.getElementById('res3').textContent = s3;
+            document.getElementById('res4').textContent = s4;
             
             document.getElementById('run').disabled = !canRun();
             
@@ -931,34 +1062,53 @@
                 else if (p.t === 'capacitor') v = p.v * 1000000 + 'µ';
                 else if (p.t === 'battery') v = p.v + 'V';
                 
-                const ic = { resistor: '⚡', capacitor: '🔋', inductor: '🧲', led: '🔴', battery: '🔌', npn: '🔺', diode: '▶', zener: '◀', opamp: '🛢️' }[p.t] || '📦';
+                const ic = { resistor: '⚡', capacitor: '🔋', inductor: '🧲', led: '🔴', battery: '🔌', npn: '🔺', diode: '▶', timer555: '🕐', relay: '🪬' }[p.t] || '📦';
                 list.innerHTML += '<div class="placed-item"><span>' + ic + ' ' + p.t + ' ' + v + '</span><button class="btn-x" onclick="rem(' + i + ')">×</button></div>';
             });
         }
         
         function show(msg) {
-            const t = document.getElementById('toast');
-            t.textContent = msg;
-            t.classList.add('show');
-            setTimeout(() => t.classList.remove('show'), 2000);
+            const toast = document.getElementById('toast');
+            toast.textContent = msg;
+            toast.classList.add('show');
+            setTimeout(() => toast.classList.remove('show'), 2000);
         }
         
         function showHelp() {
-            alert('COMPLETE ELECTRONICS LAB\n\n★ Drag components to breadboard\n★ Select circuit type\n★ Adjust values with sliders\n★ Click Run to simulate\n\n★ Right-drag to rotate view\n★ Scroll to zoom');
+            alert('FULL ELECTRONICS LAB\n\n★ Drag components to breadboard\n★ Select circuit type\n★ Adjust values with sliders\n★ Click Run to simulate\n\n★ 555 Timer: Astable/Monostable\n★ Oscillators: Hartley, Colpitts\n★ Filters: Bandpass, Notch');
         }
         
         function showTheory() {
-            alert('CIRCUIT THEORY\n\n★ RC filter: fc = 1/(2πRC)\n★ RL filter: fc = R/(2πL)\n★ Time constant: τ = RC\n★ Cutoff at 63.2%\n\n★ NPN CE amp: Gain ~ β\n★ Zener regulates at Vz\n★ Op-amp: Gain = 1 + Rf/Rin');
+            alert('CIRCUIT THEORY\n\n★ RC filter: fc = 1/(2πRC)\n★ Time constant: τ = RC\n\n★ 555 Astable:\n  T = 0.693(R1+2R2)C\n  Duty = R2/(R1+2R2)\n\n★ 555 Monostable:\n  T = 1.1RC\n\n★ Hartley: f = 1/(2π√LC)\n★ Colpitts: f = 1/(2π√(C/2)L)');
         }
         
         function enterVR() {
             if (navigator.xr) {
                 navigator.xr.isSessionSupported('immersive-vr').then(s => {
-                    if (s) alert('VR: Open this URL in Quest 3 browser');
+                    if (s) alert('VR: Open this URL in Quest browser');
                     else show('Deploy to HTTPS first');
                 });
             } else {
                 show('Use Quest browser');
+            }
+        }
+        
+        function enterAR() {
+            document.getElementById('ar-overlay').classList.add('show');
+        }
+        
+        function startAR() {
+            document.getElementById('ar-overlay').classList.remove('show');
+            if (navigator.xr) {
+                navigator.xr.isSessionSupported('immersive-ar').then(s => {
+                    if (s) {
+                        alert('AR: Starting AR session...\n\nNote: Camera passthrough requires HTTPS and Quest 3 browser with camera permissions.');
+                    } else {
+                        alert('AR not supported. Use Quest 3 browser with HTTPS.');
+                    }
+                });
+            } else {
+                alert('WebXR AR not available.\n\nTo use AR:\n1. Deploy to HTTPS\n2. Open in Quest 3 browser\n3. Grant camera permissions');
             }
         }
         
