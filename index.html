@@ -1379,6 +1379,67 @@
             show('Released');
         }
         
+        // ===== VR TELEPORT =====
+        let teleportMarker, teleportBeam;
+        
+        function setupVRTeleport() {
+            // Teleport marker (ring on floor)
+            const markerGeo = new THREE.RingGeometry(0.3, 0.4, 32);
+            const markerMat = new THREE.MeshBasicMaterial({ color: 0x00ff88, side: THREE.DoubleSide });
+            teleportMarker = new THREE.Mesh(markerGeo, markerMat);
+            teleportMarker.rotation.x = -Math.PI / 2;
+            teleportMarker.position.y = 0.01;
+            teleportMarker.visible = false;
+            scn.add(teleportMarker);
+            
+            // Teleport beam (line from controller to marker)
+            const beamGeo = new THREE.BufferGeometry().setFromPoints([new THREE.Vector3(0, 0, 0), new THREE.Vector3(0, 0, -3)]);
+            const beamMat = new THREE.LineBasicMaterial({ color: 0x00ff88 });
+            teleportBeam = new THREE.Line(beamGeo, beamMat);
+            teleportBeam.visible = false;
+            scn.add(teleportBeam);
+        }
+        
+        function updateVRTeleport(controller) {
+            if (!teleportMarker || !controller) return;
+            
+            // Cast ray from controller down to floor
+            const controllerPos = new THREE.Vector3();
+            controller.getWorldPosition(controllerPos);
+            
+            const downDir = new THREE.Vector3(0, -1, 0);
+            const ray = new THREE.Ray(controllerPos, downDir);
+            
+            // Find floor intersection at y=0
+            const floorY = 0;
+            const targetY = controllerPos.y - (ray.origin.y - floorY) * ray.direction.y;
+            
+            // Create target point
+            const targetPos = new THREE.Vector3(
+                controllerPos.x,
+                0,
+                controllerPos.z - 2 // Project forward 2 meters
+            );
+            
+            // Show marker
+            teleportMarker.visible = true;
+            teleportMarker.position.copy(targetPos);
+            
+            // Update beam
+            teleportBeam.visible = true;
+            const positions = teleportBeam.geometry.attributes.position;
+            positions.setXYZ(0, controllerPos.x, controllerPos.y - 0.1, controllerPos.z);
+            positions.setXYZ(1, targetPos.x, 0.05, targetPos.z);
+            positions.needsUpdate = true;
+            
+            // Check thumbstick for activation - simplified (would need gamepad API)
+            // For now, show teleport available
+            show('Teleport: Point thumbstick forward');
+        }
+        
+        // Call setup
+        setupVRTeleport();
+        
         function animate() {
             // For WebXR VR mode, Three.js handles the loop automatically
             if (rdr.xr.isPresenting) {
