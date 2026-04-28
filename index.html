@@ -723,9 +723,9 @@
                     break;
                     
                 case 'inductor':
-                    const coil = new THREE.Mesh(new THREE.TorusGeometry(0.08, 0.02, 8, 24), m);
-                    coil.rotation.x = Math.PI / 2;
-                    g.add(coil);
+                    var indCoil = new THREE.Mesh(new THREE.TorusGeometry(0.08, 0.02, 8, 24), m);
+                    indCoil.rotation.x = Math.PI / 2;
+                    g.add(indCoil);
                     break;
                     
                 case 'led':
@@ -767,12 +767,12 @@
                     break;
                     
                 case 'relay':
-                    const rbody = new THREE.Mesh(new THREE.BoxGeometry(0.25, 0.2, 0.2), m);
+                    var rbody = new THREE.Mesh(new THREE.BoxGeometry(0.25, 0.2, 0.2), m);
                     g.add(rbody);
-                    const coil = new THREE.Mesh(new THREE.CylinderGeometry(0.03, 0.03, 0.15, 8), new THREE.MeshStandardMaterial({ color: 0xaa6622 }));
-                    coil.rotation.z = Math.PI / 2;
-                    coil.position.x = -0.18;
-                    g.add(coil);
+                    var rCoil = new THREE.Mesh(new THREE.CylinderGeometry(0.03, 0.03, 0.15, 8), new THREE.MeshStandardMaterial({ color: 0xaa6622 }));
+                    rCoil.rotation.z = Math.PI / 2;
+                    rCoil.position.x = -0.18;
+                    g.add(rCoil);
                     break;
                     
                 case 'jkflip':
