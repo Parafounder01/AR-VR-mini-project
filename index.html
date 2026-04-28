@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Virtual Electronics Lab - Interactive RC Circuit Builder</title>
+    <title>Advanced Electronics Lab - RC/RL/RLC Circuits</title>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600&family=Space+Grotesk:wght@400;600;700&display=swap');
         
@@ -18,7 +18,7 @@
             --text-secondary: #888;
             --success: #00ff88;
             --warning: #ffaa00;
-            --error: #ff4444;
+            --cyan: #00ddff;
         }
         
         * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -29,7 +29,6 @@
             color: var(--text-primary);
             overflow: hidden;
             height: 100vh;
-            cursor: crosshair;
         }
         
         #canvas { width: 100%; height: 100%; display: block; cursor: grab; }
@@ -37,7 +36,7 @@
         
         .header {
             position: fixed; top: 0; left: 0; right: 0;
-            padding: 14px 24px;
+            padding: 12px 20px;
             background: linear-gradient(180deg, rgba(10,10,15,0.95) 0%, transparent 100%);
             display: flex; justify-content: space-between; align-items: center;
             z-index: 100;
@@ -45,7 +44,7 @@
         
         .logo {
             font-family: 'JetBrains Mono', monospace;
-            font-size: 15px;
+            font-size: 14px;
             font-weight: 600;
             background: linear-gradient(90deg, var(--accent-pink), var(--success));
             -webkit-background-clip: text;
@@ -53,128 +52,132 @@
             background-clip: text;
         }
         
-        .status-bar { display: flex; gap: 12px; font-size: 10px; }
+        .header-btns {
+            display: flex; gap: 8px;
+        }
+        
+        .header-btn {
+            padding: 8px 14px;
+            background: rgba(255,255,255,0.05);
+            border: 1px solid #2a2a35;
+            border-radius: 6px;
+            color: var(--text-primary);
+            font-size: 11px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+        
+        .header-btn:hover {
+            border-color: var(--accent-pink);
+            background: rgba(255, 112, 191, 0.15);
+        }
+        
+        .header-btn.vr {
+            background: linear-gradient(135deg, var(--accent-purple), var(--accent-magenta));
+            border: none;
+        }
+        
+        .status-bar { display: flex; gap: 10px; font-size: 9px; }
         
         .status-item {
-            display: flex; align-items: center; gap: 6px;
-            padding: 5px 10px;
+            display: flex; align-items: center; gap: 5px;
+            padding: 4px 10px;
             background: rgba(255,255,255,0.05);
-            border-radius: 20px;
+            border-radius: 15px;
         }
         
-        .status-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--text-secondary); }
-        .status-dot.active { background: var(--success); box-shadow: 0 0 8px var(--success); }
+        .status-dot { width: 5px; height: 5px; border-radius: 50%; background: var(--text-secondary); }
+        .status-dot.on { background: var(--success); box-shadow: 0 0 6px var(--success); }
         
-        .component-tray {
-            position: fixed; left: 16px; top: 70px; width: 90px;
+        /* Left Panel - Components */
+        .left-panel {
+            position: fixed; left: 12px; top: 60px; width: 85px;
             background: var(--bg-panel); border: 1px solid #2a2a35;
             border-radius: 10px; padding: 10px;
-            display: flex; flex-direction: column; gap: 6px;
+            display: flex; flex-direction: column; gap: 5px;
+            max-height: calc(100vh - 80px); overflow-y: auto;
         }
         
-        .tray-title {
-            font-size: 9px; color: var(--text-secondary);
+        .panel-label {
+            font-size: 8px; color: var(--text-secondary);
             text-transform: uppercase; letter-spacing: 1px;
             text-align: center; margin-bottom: 4px;
         }
         
-        .tray-component {
-            width: 70px; height: 54px;
+        .tray-comp {
+            width: 65px; height: 50px;
             background: rgba(255,255,255,0.03);
             border: 1px solid #2a2a35;
-            border-radius: 6px;
+            border-radius: 5px;
             display: flex; flex-direction: column;
             align-items: center; justify-content: center;
             cursor: grab; transition: all 0.2s ease;
             user-select: none;
         }
         
-        .tray-component:hover {
+        .tray-comp:hover {
             border-color: var(--accent-pink);
             background: rgba(255, 112, 191, 0.15);
-            transform: scale(1.05);
+            transform: scale(1.03);
         }
         
-        .tray-component .icon { font-size: 22px; margin-bottom: 2px; }
-        .tray-component .name { font-size: 8px; color: var(--text-primary); }
+        .tray-comp .icon { font-size: 20px; }
+        .tray-comp .name { font-size: 7px; margin-top: 2px; }
         
-        .mode-panel {
-            position: fixed; left: 16px; bottom: 16px;
-            display: flex; flex-direction: column; gap: 6px;
-        }
-        
-        .mode-btn {
-            padding: 10px 14px;
-            background: var(--bg-panel);
-            border: 1px solid #2a2a35;
-            border-radius: 6px;
-            color: var(--text-primary);
-            font-size: 10px;
-            cursor: pointer;
-            transition: all 0.2s ease;
-            display: flex; align-items: center; gap: 6px;
-        }
-        
-        .mode-btn:hover, .mode-btn.active {
-            border-color: var(--accent-pink);
-            background: rgba(255, 112, 191, 0.15);
-        }
-        
-        .circuit-panel {
-            position: fixed; right: 16px; top: 70px; width: 260px;
+        /* Right Panel - Builder */
+        .right-panel {
+            position: fixed; right: 12px; top: 60px; width: 240px;
             background: var(--bg-panel); border: 1px solid #2a2a35;
-            border-radius: 10px; padding: 14px;
-            max-height: calc(100vh - 100px); overflow-y: auto;
+            border-radius: 10px; padding: 12px;
+            max-height: calc(100vh - 80px); overflow-y: auto;
         }
         
-        .panel-title {
-            font-size: 10px; color: var(--accent-pink);
+        .section-title {
+            font-size: 9px; color: var(--accent-pink);
             text-transform: uppercase; letter-spacing: 1px;
-            margin-bottom: 12px;
-            display: flex; align-items: center; gap: 6px;
+            margin-bottom: 10px;
+            display: flex; align-items: center; gap: 5px;
         }
         
-        .panel-title::before {
-            content: ''; width: 3px; height: 12px;
+        .section-title::before {
+            content: ''; width: 2px; height: 10px;
             background: var(--accent-pink); border-radius: 2px;
         }
         
         .placed-list {
-            display: flex; flex-direction: column; gap: 6px;
+            display: flex; flex-direction: column; gap: 4px;
             margin-bottom: 12px;
-            max-height: 120px; overflow-y: auto;
         }
         
         .placed-item {
             display: flex; align-items: center; justify-content: space-between;
-            padding: 8px;
+            padding: 6px 8px;
             background: rgba(255,255,255,0.03);
             border: 1px solid #2a2a35;
-            border-radius: 5px;
-            font-size: 11px;
+            border-radius: 4px;
+            font-size: 10px;
         }
         
-        .placed-item .info { display: flex; align-items: center; gap: 6px; }
-        .placed-item .remove-btn {
-            width: 20px; height: 20px;
+        .placed-item .btn-x {
+            width: 18px; height: 18px;
             background: rgba(255, 50, 50, 0.2);
             border: none; border-radius: 3px;
             color: #ff6666; cursor: pointer;
-            font-size: 12px;
+            font-size: 11px; line-height: 1;
         }
         
-        .circuit-selector {
+        .circuit-grid {
             display: grid; grid-template-columns: repeat(2, 1fr); gap: 4px;
             margin-bottom: 12px;
         }
         
         .circuit-btn {
-            padding: 8px;
+            padding: 7px;
             background: transparent;
             border: 1px solid #2a2a35;
-            border-radius: 5px;
+            border-radius: 4px;
             color: var(--text-secondary);
-            font-size: 9px;
+            font-size: 8px;
             cursor: pointer; transition: all 0.2s ease;
         }
         
@@ -184,205 +187,159 @@
             color: white;
         }
         
-        .slider-group { margin-bottom: 12px; }
+        .slider-group { margin-bottom: 10px; }
         
-        .slider-label {
+        .slider-row {
             display: flex; justify-content: space-between;
-            font-size: 10px; margin-bottom: 6px;
+            font-size: 9px; margin-bottom: 4px;
         }
         
-        .slider-label .value {
+        .slider-row .val {
             font-family: 'JetBrains Mono', monospace;
             color: var(--success);
         }
         
         input[type="range"] {
-            width: 100%; height: 5px;
+            width: 100%; height: 4px;
             -webkit-appearance: none;
             background: #2a2a35;
-            border-radius: 3px; outline: none;
+            border-radius: 2px;
         }
         
         input[type="range"]::-webkit-slider-thumb {
             -webkit-appearance: none;
-            width: 14px; height: 14px;
+            width: 12px; height: 12px;
             border-radius: 50%;
             background: linear-gradient(135deg, var(--accent-pink), var(--accent-magenta));
             cursor: pointer;
         }
         
-        .sim-results {
+        .results-box {
             background: rgba(0,0,0,0.3);
-            border-radius: 6px; padding: 10px;
-            margin-bottom: 12px;
+            border-radius: 5px; padding: 8px;
+            margin-bottom: 10px;
         }
         
         .result-row {
             display: flex; justify-content: space-between;
-            font-size: 10px; margin-bottom: 4px;
+            font-size: 9px; margin-bottom: 3px;
         }
         
-        .result-row .label { color: var(--text-secondary); }
-        .result-row .value {
+        .result-row .l { color: var(--text-secondary); }
+        .result-row .v {
             font-family: 'JetBrains Mono', monospace;
             color: var(--success);
         }
         
         .run-btn {
-            width: 100%; padding: 12px;
+            width: 100%; padding: 10px;
             background: linear-gradient(135deg, var(--accent-purple), var(--accent-magenta));
-            border: none; border-radius: 6px;
-            color: white; font-size: 12px;
+            border: none; border-radius: 5px;
+            color: white; font-size: 11px;
             font-weight: 600; cursor: pointer;
             transition: all 0.3s ease;
         }
         
         .run-btn:hover {
-            transform: scale(1.02);
-            box-shadow: 0 0 20px rgba(131, 28, 145, 0.5);
+            transform: scale(1.01);
+            box-shadow: 0 0 15px rgba(131, 28, 145, 0.4);
         }
         
-        .run-btn:disabled {
-            opacity: 0.5; cursor: not-allowed;
-            transform: none;
+        .run-btn:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
+        
+        /* Bottom Panel - Meters */
+        .bottom-panel {
+            position: fixed; left: 110px; bottom: 12px;
+            display: flex; gap: 8px;
         }
         
-        .cro-panel {
-            position: fixed; right: 16px; bottom: 16px;
-            width: 380px; height: 200px;
+        .meter-box {
             background: var(--bg-panel);
             border: 1px solid #2a2a35;
-            border-radius: 10px; padding: 10px;
+            border-radius: 8px; padding: 8px 12px;
+            min-width: 90px;
         }
         
-        .cro-display {
-            width: 100%; height: 150px;
+        .meter-box .label {
+            font-size: 8px; color: var(--text-secondary);
+            text-transform: uppercase;
+        }
+        
+        .meter-box .value {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 14px;
+            color: var(--cyan);
+        }
+        
+        .meter-box.active .value {
+            color: var(--success);
+            text-shadow: 0 0 8px var(--success);
+        }
+        
+        /* CRO Panel */
+        .cro-panel {
+            position: fixed; right: 12px; bottom: 12px;
+            width: 340px; height: 180px;
+            background: var(--bg-panel);
+            border: 1px solid #2a2a35;
+            border-radius: 10px; padding: 8px;
+        }
+        
+        .cro-title {
+            font-size: 9px; color: var(--accent-pink);
+            text-transform: uppercase; letter-spacing: 1px;
+            margin-bottom: 6px;
+        }
+        
+        .cro-canvas {
+            width: 100%; height: 135px;
             background: #000;
-            border-radius: 5px;
+            border-radius: 4px;
             border: 1px solid #222;
         }
         
-        .measure-panel {
-            position: fixed; left: 16px; top: 320px;
-            width: 90px;
-            background: var(--bg-panel);
-            border: 1px solid #2a2a35;
-            border-radius: 10px; padding: 10px;
-        }
-        
-        .measure-item {
-            text-align: center; padding: 6px;
-            margin-bottom: 6px;
-            background: rgba(0,0,0,0.3);
-            border-radius: 5px;
-        }
-        
-        .measure-item .label {
-            font-size: 8px; color: var(--text-secondary);
-        }
-        
-        .measure-item .value {
-            font-family: 'JetBrains Mono', monospace;
-            font-size: 12px;
-            color: var(--success);
-        }
-        
-        .worksheet-panel {
-            position: fixed;
-            top: 50%; left: 50%;
-            transform: translate(-50%, -50%);
-            width: 500px; max-height: 80vh;
-            background: var(--bg-panel);
-            border: 1px solid var(--accent-purple);
-            border-radius: 12px; padding: 20px;
-            z-index: 300;
-            display: none;
-            overflow-y: auto;
-        }
-        
-        .worksheet-panel.show { display: block; }
-        
-        .worksheet-panel h3 {
-            color: var(--accent-pink);
-            margin-bottom: 16px;
-        }
-        
-        .worksheet-panel .question {
-            padding: 12px;
-            background: rgba(0,0,0,0.3);
-            border-radius: 8px;
-            margin-bottom: 12px;
-        }
-        
-        .worksheet-panel .q-num {
-            color: var(--accent-pink);
-            font-weight: 600;
-            margin-right: 8px;
-        }
-        
-        .worksheet-panel .q-text {
-            font-size: 13px; margin-bottom: 8px;
-        }
-        
-        .worksheet-panel input[type="text"] {
-            width: 100%; padding: 8px;
-            background: #1a1a25;
-            border: 1px solid #2a2a35;
-            border-radius: 5px;
-            color: var(--text-primary);
-            font-size: 12px;
-        }
-        
-        .worksheet-close {
-            position: absolute; top: 12px; right: 12px;
-            width: 28px; height: 28px;
-            background: rgba(255,255,255,0.1);
-            border: none; border-radius: 5px;
-            color: var(--text-primary); cursor: pointer;
-            font-size: 16px;
-        }
-        
+        /* Instructions */
         .instructions {
-            position: fixed; bottom: 16px; left: 50%;
+            position: fixed; bottom: 12px; left: 50%;
             transform: translateX(-50%);
             background: var(--bg-panel);
             border: 1px solid #2a2a35;
             border-radius: 6px;
-            padding: 10px 16px;
-            font-size: 10px;
+            padding: 8px 14px;
+            font-size: 9px;
             color: var(--text-secondary);
-            display: flex; gap: 16px;
+            display: flex; gap: 14px;
         }
         
-        .instruction-item { display: flex; align-items: center; gap: 4px; }
+        .instr-item { display: flex; align-items: center; gap: 4px; }
         
-        .instruction-key {
-            padding: 2px 6px;
+        .key {
+            padding: 2px 5px;
             background: rgba(255,255,255,0.1);
             border-radius: 3px;
-            font-size: 9px;
+            font-size: 8px;
         }
         
         .toast {
-            position: fixed; top: 70px; left: 50%;
+            position: fixed; top: 60px; left: 50%;
             transform: translateX(-50%);
-            padding: 10px 20px;
+            padding: 8px 16px;
             background: var(--accent-purple);
-            border-radius: 6px;
-            font-size: 11px;
+            border-radius: 5px;
+            font-size: 10px;
             z-index: 200;
             display: none;
         }
         
-        .toast.show { display: block; animation: toastIn 0.3s ease; }
+        .toast.show { display: block; animation: fadeIn 0.3s ease; }
         
-        @keyframes toastIn {
+        @keyframes fadeIn {
             from { opacity: 0; transform: translateX(-50%) translateY(-10px); }
             to { opacity: 1; transform: translateX(-50%) translateY(0); }
         }
         
-        ::-webkit-scrollbar { width: 5px; }
-        ::-webkit-scrollbar-thumb { background: #333; border-radius: 3px; }
+        ::-webkit-scrollbar { width: 4px; }
+        ::-webkit-scrollbar-thumb { background: #333; border-radius: 2px; }
     </style>
 </head>
 <body>
@@ -390,205 +347,175 @@
     
     <!-- Header -->
     <div class="header">
-        <div class="logo">⚡ Virtual Electronics Lab</div>
+        <div class="logo">⚡ Advanced Electronics Lab</div>
+        <div class="header-btns">
+            <button class="header-btn" onclick="toggleInfo()">ℹ️ Info</button>
+            <button class="header-btn vr" onclick="enterVR()">🥽 VR Mode</button>
+        </div>
         <div class="status-bar">
             <div class="status-item">
-                <div class="status-dot" id="power-dot"></div>
+                <div class="status-dot" id="pwr-dot"></div>
                 <span>Power</span>
             </div>
             <div class="status-item">
-                <div class="status-dot" id="wire-dot"></div>
-                <span id="wire-status">0 wires</span>
+                <div class="status-dot" id="sim-dot"></div>
+                <span id="sim-lbl">Stopped</span>
             </div>
             <div class="status-item">
-                <div class="status-dot" id="sim-dot"></div>
-                <span id="sim-status">Idle</span>
+                <div class="status-dot" id="vr-dot"></div>
+                <span>VR</span>
             </div>
         </div>
     </div>
     
     <!-- Component Tray -->
-    <div class="component-tray">
-        <div class="tray-title">Components</div>
+    <div class="left-panel">
+        <div class="panel-label">Components</div>
         
-        <div class="tray-component" draggable="true" data-component="resistor" data-value="10000">
+        <div class="tray-comp" draggable="true" data-type="resistor" data-val="10000">
             <div class="icon">⚡</div>
-            <div class="name">10K Res</div>
+            <div class="name">10KΩ Res</div>
         </div>
         
-        <div class="tray-component" draggable="true" data-component="capacitor" data-value="0.000001">
+        <div class="tray-comp" draggable="true" data-type="inductor" data-val="0.01">
+            <div class="icon">🧲</div>
+            <div class="name">10mH Ind</div>
+        </div>
+        
+        <div class="tray-comp" draggable="true" data-type="capacitor" data-val="0.000001">
             <div class="icon">🔋</div>
             <div class="name">1µF Cap</div>
         </div>
         
-        <div class="tray-component" draggable="true" data-component="capacitor" data-value="0.000047">
+        <div class="tray-comp" draggable="true" data-type="capacitor" data-val="0.000047">
             <div class="icon">🔋</div>
             <div class="name">47µF Cap</div>
         </div>
         
-        <div class="tray-component" draggable="true" data-component="led" data-value="2">
+        <div class="tray-comp" draggable="true" data-type="led" data-val="2">
             <div class="icon">🔴</div>
             <div class="name">LED</div>
         </div>
         
-        <div class="tray-component" draggable="true" data-component="battery" data-value="9">
+        <div class="tray-comp" draggable="true" data-type="battery" data-val="9">
             <div class="icon">🔌</div>
-            <div class="name">9V Batt</div>
+            <div class="name">9V Battery</div>
         </div>
         
-        <div class="tray-component" draggable="true" data-component="switch" data-value="1">
-            <div class="icon">⬛</div>
-            <div class="name">Switch</div>
-        </div>
-        
-        <div class="tray-component" draggable="true" data-component="wire" data-value="0">
-            <div class="icon">〰️</div>
-            <div class="name">Wire</div>
+        <div class="tray-comp" draggable="true" data-type="generator" data-val="1000">
+            <div class="icon">🎵</div>
+            <div class="name">Signal Gen</div>
         </div>
     </div>
     
-    <!-- Measurement Panel -->
-    <div class="measure-panel">
-        <div class="panel-title">Meters</div>
-        
-        <div class="measure-item">
-            <div class="label">Voltage (V)</div>
+    <!-- Measurements -->
+    <div class="bottom-panel">
+        <div class="meter-box" id="voltage-box">
+            <div class="label">Voltage</div>
             <div class="value" id="voltage-val">0.00 V</div>
         </div>
         
-        <div class="measure-item">
-            <div class="label">Current (I)</div>
+        <div class="meter-box" id="current-box">
+            <div class="label">Current</div>
             <div class="value" id="current-val">0.00 mA</div>
         </div>
         
-        <div class="measure-item">
-            <div class="label">Power (P)</div>
-            <div class="value" id="power-val">0.00 mW</div>
+        <div class="meter-box" id="freq-box">
+            <div class="label">Frequency</div>
+            <div class="value" id="freq-val">0 Hz</div>
         </div>
-    </div>
-    
-    <!-- Mode Buttons -->
-    <div class="mode-panel">
-        <button class="mode-btn active" data-mode="place">📦 Place</button>
-        <button class="mode-btn" data-mode="wire">〰️ Wire</button>
-        <button class="mode-btn" data-mode="run">▶️ Run</button>
-        <button class="mode-btn" data-mode="worksheet">📝 Worksheet</button>
-        <button class="mode-btn" data-mode="reset">🔄 Reset</button>
+        
+        <div class="meter-box" id="period-box">
+            <div class="label">Period</div>
+            <div class="value" id="period-val">--</div>
+        </div>
     </div>
     
     <!-- Circuit Builder -->
-    <div class="circuit-panel">
-        <div class="panel-title">Circuit Builder</div>
+    <div class="right-panel">
+        <div class="section-title">Placed Components</div>
+        <div class="placed-list" id="placed-list"></div>
         
-        <div class="placed-list" id="placed-list">
-            <!-- Placed components appear here -->
+        <div class="section-title">Circuit Type</div>
+        <div class="circuit-grid">
+            <button class="circuit-btn active" data-ckt="rc-low">RC Low-Pass</button>
+            <button class="circuit-btn" data-ckt="rc-high">RC High-Pass</button>
+            <button class="circuit-btn" data-ckt="rl-low">RL Low-Pass</button>
+            <button class="circuit-btn" data-ckt="rl-high">RL High-Pass</button>
+            <button class="circuit-btn" data-ckt="rlc-series">RLC Series</button>
+            <button class="circuit-btn" data-ckt="rlc-parallel">RLC Parallel</button>
+            <button class="circuit-btn" data-ckt="charge">Charge</button>
+            <button class="circuit-btn" data-ckt="discharge">Discharge</button>
         </div>
         
-        <div class="panel-title" style="margin-top: 12px;">Circuit Type</div>
-        
-        <div class="circuit-selector">
-            <button class="circuit-btn active" data-circuit="rc-low">RC Low-Pass</button>
-            <button class="circuit-btn" data-circuit="rc-high">RC High-Pass</button>
-            <button class="circuit-btn" data-circuit="charge">Charge</button>
-            <button class="circuit-btn" data-circuit="discharge">Discharge</button>
-            <button class="circuit-btn" data-circuit="vdivider">Voltage Div</button>
-            <button class="circuit-btn" data-circuit="led-blink">LED Blink</button>
-        </div>
-        
-        <div class="panel-title" style="margin-top: 12px;">Manual Values</div>
+        <div class="section-title">Component Values</div>
         
         <div class="slider-group">
-            <div class="slider-label">
-                <span>R</span>
-                <span class="value" id="r-display">10KΩ</span>
+            <div class="slider-row">
+                <span>Resistance (R)</span>
+                <span class="val" id="r-disp">10KΩ</span>
             </div>
-            <input type="range" id="r-slider" min="1" max="100" value="10">
+            <input type="range" id="r-sldr" min="1" max="100" value="10">
         </div>
         
         <div class="slider-group">
-            <div class="slider-label">
-                <span>C</span>
-                <span class="value" id="c-display">1µF</span>
+            <div class="slider-row">
+                <span>Inductance (L)</span>
+                <span class="val" id="l-disp">10mH</span>
             </div>
-            <input type="range" id="c-slider" min="1" max="100" value="1">
+            <input type="range" id="l-sldr" min="1" max="100" value="10">
         </div>
         
-        <div class="sim-results" id="sim-results">
+        <div class="slider-group">
+            <div class="slider-row">
+                <span>Capacitance (C)</span>
+                <span class="val" id="c-disp">1µF</span>
+            </div>
+            <input type="range" id="c-sldr" min="1" max="100" value="1">
+        </div>
+        
+        <div class="slider-group">
+            <div class="slider-row">
+                <span>Frequency (f)</span>
+                <span class="val" id="f-disp">1KHz</span>
+            </div>
+            <input type="range" id="f-sldr" min="1" max="100" value="10">
+        </div>
+        
+        <div class="results-box">
             <div class="result-row">
-                <span class="label">τ (tau)</span>
-                <span class="value" id="tau-result">--</span>
+                <span class="l">Time Constant τ</span>
+                <span class="v" id="tau-r">--</span>
             </div>
             <div class="result-row">
-                <span class="label">fc</span>
-                <span class="value" id="fc-result">--</span>
+                <span class="l">Cutoff fc</span>
+                <span class="v" id="fc-r">--</span>
             </div>
             <div class="result-row">
-                <span class="label">V@τ</span>
-                <span class="value" id="v-result">--</span>
+                <span class="l">Resonant fr</span>
+                <span class="v" id="fr-r">--</span>
+            </div>
+            <div class="result-row">
+                <span class="l">Q Factor</span>
+                <span class="v" id="q-r">--</span>
             </div>
         </div>
         
-        <button class="run-btn" id="run-btn" disabled>▶ Run Simulation</button>
+        <button class="run-btn" id="run-btn" disabled onclick="toggleSim()">▶ Run Simulation</button>
     </div>
     
-    <!-- CRO Display -->
+    <!-- CRO -->
     <div class="cro-panel">
-        <div class="panel-title">CRO Oscilloscope</div>
-        <canvas class="cro-display" id="cro-canvas"></canvas>
-    </div>
-    
-    <!-- Worksheet Panel -->
-    <div class="worksheet-panel" id="worksheet-panel">
-        <button class="worksheet-close" onclick="toggleWorksheet()">×</button>
-        <h3>📝 RC Circuit Student Worksheet</h3>
-        
-        <div class="question">
-            <span class="q-num">Q1.</span>
-            <span class="q-text">What is the time constant (τ) of an RC circuit with R=10KΩ and C=47µF?</span>
-            <input type="text" placeholder="Your answer (in ms)..." data-answer="470">
-        </div>
-        
-        <div class="question">
-            <span class="q-num">Q2.</span>
-            <span class="q-text">What is the cutoff frequency for R=10KΩ and C=1µF?</span>
-            <input type="text" placeholder="Your answer (in Hz)..." data-answer="15.9">
-        </div>
-        
-        <div class="question">
-            <span class="q-num">Q3.</span>
-            <span class="q-text">After one time constant, what percentage of final voltage is reached?</span>
-            <input type="text" placeholder="Your answer (%)..." data-answer="63.2">
-        </div>
-        
-        <div class="question">
-            <span class="q-num">Q4.</span>
-            <span class="q-text">In a high-pass RC filter, what happens to low frequency signals?</span>
-            <input type="text" placeholder="Your answer..." data-answer="blocked">
-        </div>
-        
-        <div class="question">
-            <span class="q-num">Q5.</span>
-            <span class="q-text">What component stores energy in an electric field?</span>
-            <input type="text" placeholder="Your answer..." data-answer="capacitor">
-        </div>
-        
-        <button class="run-btn" onclick="checkAnswers()">✅ Check Answers</button>
+        <div class="cro-title">CRO Oscilloscope</div>
+        <canvas class="cro-canvas" id="cro-canvas"></canvas>
     </div>
     
     <!-- Instructions -->
     <div class="instructions">
-        <div class="instruction-item">
-            <span class="instruction-key">Drag</span> Add to board
-        </div>
-        <div class="instruction-item">
-            <span class="instruction-key">Click</span> Select
-        </div>
-        <div class="instruction-item">
-            <span class="instruction-key">Right-drag</span> Rotate
-        </div>
-        <div class="instruction-item">
-            <span class="instruction-key">Scroll</span> Zoom
-        </div>
+        <div class="instr-item"><span class="key">Drag</span> Add to board</div>
+        <div class="instr-item"><span class="key">Right-drag</span> Rotate</div>
+        <div class="instr-item"><span class="key">Scroll</span> Zoom</div>
+        <div class="instr-item"><span class="key">VR</span> Quest browser</div>
     </div>
     
     <!-- Toast -->
@@ -598,23 +525,21 @@
     <script>
         // ===== STATE =====
         const state = {
-            mode: 'place',
-            circuitType: 'rc-low',
+            circuit: 'rc-low',
             placed: [],
-            wires: [],
             running: false,
             r: 10000,
+            l: 0.01,
             c: 0.000001,
-            switchClosed: false
+            f: 1000
         };
         
         // ===== THREE.JS =====
-        let scene, camera, renderer, breadboard;
+        let scene, camera, renderer, board;
         let placedObjs = [];
-        let wireObjs = [];
         let raycaster, mouse;
-        let isMouseDown = false, lastX = 0, lastY = 0;
-        let camAngle = 0, camHeight = 8, camDist = 14;
+        let isMouse = false, lx = 0, ly = 0;
+        let ca = 0, ch = 8, cd = 14;
         
         function init() {
             scene = new THREE.Scene();
@@ -630,13 +555,13 @@
             renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
             renderer.shadowMap.enabled = true;
             
-            // Lighting
+            // Lights
             scene.add(new THREE.AmbientLight(0x404060, 0.6));
             
-            const mainLight = new THREE.DirectionalLight(0xffffff, 0.8);
-            mainLight.position.set(5, 15, 10);
-            mainLight.castShadow = true;
-            scene.add(mainLight);
+            const main = new THREE.DirectionalLight(0xffffff, 0.8);
+            main.position.set(5, 15, 10);
+            main.castShadow = true;
+            scene.add(main);
             
             const p1 = new THREE.PointLight(0x831C91, 0.4, 20);
             p1.position.set(-5, 5, -5);
@@ -653,139 +578,119 @@
                 new THREE.MeshStandardMaterial({ color: 0x0a0a0f, roughness: 0.9 })
             );
             floor.rotation.x = -Math.PI / 2;
-            floor.receiveShadow = true;
             scene.add(floor);
             
-            // Table
             createTable();
-            createBreadboard();
-            createHoles();
+            createBoard();
             
             raycaster = new THREE.Raycaster();
             mouse = new THREE.Vector2();
             
-            setupEvents();
+            events();
             animate();
             animateCRO();
             updateUI();
         }
         
         function createTable() {
-            const table = new THREE.Mesh(
+            const t = new THREE.Mesh(
                 new THREE.BoxGeometry(5, 0.15, 3.5),
                 new THREE.MeshStandardMaterial({ color: 0x1a1a25, roughness: 0.3, metalness: 0.7 })
             );
-            table.position.y = 1;
-            table.castShadow = true;
-            scene.add(table);
+            t.position.y = 1;
+            scene.add(t);
             
             // Legs
-            [[-2.2, 0.5, -1.5], [2.2, 0.5, -1.5], [-2.2, 0.5, 1.5], [2.2, 0.5, 1.5]].forEach(pos => {
-                const leg = new THREE.Mesh(
+            [[-2.2, 0.5, -1.5], [2.2, 0.5, -1.5], [-2.2, 0.5, 1.5], [2.2, 0.5, 1.5]].forEach(p => {
+                const l = new THREE.Mesh(
                     new THREE.CylinderGeometry(0.06, 0.06, 1, 8),
                     new THREE.MeshStandardMaterial({ color: 0x2a2a35, metalness: 0.8 })
                 );
-                leg.position.set(...pos);
-                scene.add(leg);
+                l.position.set(...p);
+                scene.add(l);
             });
             
             // Label
-            const canvas = document.createElement('canvas');
-            canvas.width = 512; canvas.height = 96;
-            const ctx = canvas.getContext('2d');
+            const c = document.createElement('canvas');
+            c.width = 400; c.height = 80;
+            const ctx = c.getContext('2d');
             ctx.fillStyle = '#831C91';
-            ctx.fillRect(0, 0, 512, 96);
+            ctx.fillRect(0, 0, 400, 80);
             ctx.fillStyle = '#FF70BF';
-            ctx.font = 'bold 36px monospace';
+            ctx.font = 'bold 28px monospace';
             ctx.textAlign = 'center';
-            ctx.fillText('ELECTRONICS LAB - RC CIRCUITS', 256, 60);
+            ctx.fillText('ADVANCED ELECTRONICS LAB', 200, 50);
             
-            const label = new THREE.Mesh(
-                new THREE.PlaneGeometry(4, 0.75),
-                new THREE.MeshBasicMaterial({ map: new THREE.CanvasTexture(canvas), transparent: true })
+            const lb = new THREE.Mesh(
+                new THREE.PlaneGeometry(3.5, 0.7),
+                new THREE.MeshBasicMaterial({ map: new THREE.CanvasTexture(c), transparent: true })
             );
-            label.position.set(0, 1.5, -1.55);
-            label.rotation.x = -0.3;
-            scene.add(label);
+            lb.position.set(0, 1.5, -1.55);
+            lb.rotation.x = -0.3;
+            scene.add(lb);
         }
         
-        function createBreadboard() {
-            breadboard = new THREE.Mesh(
+        function createBoard() {
+            board = new THREE.Mesh(
                 new THREE.BoxGeometry(3, 0.12, 2),
                 new THREE.MeshStandardMaterial({ color: 0x1a1a25, roughness: 0.4, metalness: 0.5 })
             );
-            breadboard.position.set(0, 1.12, 0);
-            breadboard.name = 'breadboard';
-            scene.add(breadboard);
+            board.position.set(0, 1.12, 0);
+            board.name = 'board';
+            scene.add(board);
             
-            // Power rails
-            const redRail = new THREE.Mesh(
+            // Rails
+            const r = new THREE.Mesh(
                 new THREE.BoxGeometry(3, 0.08, 0.12),
                 new THREE.MeshStandardMaterial({ color: 0xcc2222 })
             );
-            redRail.position.set(0, 1.18, -0.85);
-            scene.add(redRail);
+            r.position.set(0, 1.18, -0.85);
+            scene.add(r);
             
-            const blueRail = new THREE.Mesh(
+            const b = new THREE.Mesh(
                 new THREE.BoxGeometry(3, 0.08, 0.12),
                 new THREE.MeshStandardMaterial({ color: 0x2222cc })
             );
-            blueRail.position.set(0, 1.18, 0.85);
-            scene.add(blueRail);
+            b.position.set(0, 1.18, 0.85);
+            scene.add(b);
         }
         
-        function createHoles() {
-            const holeGeo = new THREE.CylinderGeometry(0.025, 0.025, 0.02, 8);
-            const holeMat = new THREE.MeshBasicMaterial({ color: 0x0a0a0a });
-            
-            for (let row = -3; row <= 3; row++) {
-                for (let col = -5; col <= -1; col++) {
-                    const hole = new THREE.Mesh(holeGeo, holeMat.clone());
-                    hole.position.set(col * 0.28, 1.19, row * 0.24);
-                    hole.userData.pos = { r: row, c: col };
-                    scene.add(hole);
-                }
-                for (let col = 1; col <= 5; col++) {
-                    const hole = new THREE.Mesh(holeGeo, holeMat.clone());
-                    hole.position.set(col * 0.28, 1.19, row * 0.24);
-                    hole.userData.pos = { r: row, c: col };
-                    scene.add(hole);
-                }
-            }
-        }
-        
-        // ===== COMPONENT 3D =====
-        function createComp3D(type, val) {
+        // ===== COMPONENTS =====
+        function comp3D(type, val) {
             const g = new THREE.Group();
-            g.userData.type = type;
-            g.userData.value = val;
+            g.userData = { type, val };
             
-            const colors = { resistor: 0xd552a3, capacitor: 0x462c7d, led: 0xff3333, battery: 0x22aa22, switch: 0x666666, wire: 0x888888 };
-            const mat = new THREE.MeshStandardMaterial({ color: colors[type] || 0x831c91, roughness: 0.4, metalness: 0.6 });
+            const cols = { resistor: 0xd552a3, inductor: 0x46a7d7, capacitor: 0x462c7d, led: 0xff3333, battery: 0x22aa22, generator: 0x22aa66 };
+            const m = new THREE.MeshStandardMaterial({ color: cols[type] || 0x831c91, roughness: 0.4, metalness: 0.6 });
             
             switch(type) {
                 case 'resistor':
-                    const body = new THREE.Mesh(new THREE.CylinderGeometry(0.05, 0.05, 0.25, 12), mat);
-                    body.rotation.z = Math.PI / 2;
-                    g.add(body);
-                    // Bands
+                    const b = new THREE.Mesh(new THREE.CylinderGeometry(0.05, 0.05, 0.25, 12), m);
+                    b.rotation.z = Math.PI / 2;
+                    g.add(b);
                     [0x8B4513, 0xFF8C00, 0xFFD700].forEach((c, i) => {
-                        const band = new THREE.Mesh(
+                        const bn = new THREE.Mesh(
                             new THREE.CylinderGeometry(0.052, 0.052, 0.025, 12),
                             new THREE.MeshStandardMaterial({ color: c })
                         );
-                        band.rotation.z = Math.PI / 2;
-                        band.position.x = -0.08 + i * 0.05;
-                        g.add(band);
+                        bn.rotation.z = Math.PI / 2;
+                        bn.position.x = -0.08 + i * 0.05;
+                        g.add(bn);
                     });
                     break;
                     
+                case 'inductor':
+                    const coil = new THREE.Mesh(new THREE.TorusGeometry(0.08, 0.02, 8, 24), m);
+                    coil.rotation.x = Math.PI / 2;
+                    g.add(coil);
+                    const c2 = new THREE.Mesh(new THREE.TorusGeometry(0.06, 0.02, 8, 24), m);
+                    c2.rotation.x = Math.PI / 2;
+                    c2.position.y = 0.04;
+                    g.add(c2);
+                    break;
+                    
                 case 'capacitor':
-                    g.add(new THREE.Mesh(new THREE.CylinderGeometry(0.07, 0.07, 0.18, 16), mat));
-                    g.add(new THREE.Mesh(
-                        new THREE.CylinderGeometry(0.04, 0.02, 0.04, 16),
-                        new THREE.MeshStandardMaterial({ color: 0x666666 })
-                    ));
+                    g.add(new THREE.Mesh(new THREE.CylinderGeometry(0.07, 0.07, 0.18, 16), m));
                     break;
                     
                 case 'led':
@@ -793,167 +698,142 @@
                         new THREE.SphereGeometry(0.07, 16, 16, 0, Math.PI * 2, 0, Math.PI / 2),
                         new THREE.MeshStandardMaterial({ color: 0xff0000, emissive: 0xff0000, emissiveIntensity: 0.3, transparent: true, opacity: 0.8 })
                     ));
-                    g.add(new THREE.Mesh(
-                        new THREE.CylinderGeometry(0.035, 0.035, 0.04, 12),
-                        new THREE.MeshStandardMaterial({ color: 0x333333 })
-                    ));
                     break;
                     
                 case 'battery':
-                    g.add(new THREE.Mesh(new THREE.BoxGeometry(0.22, 0.35, 0.14), mat));
+                    g.add(new THREE.Mesh(new THREE.BoxGeometry(0.22, 0.35, 0.14), m));
                     g.add(new THREE.Mesh(
                         new THREE.CylinderGeometry(0.018, 0.018, 0.04, 8),
                         new THREE.MeshStandardMaterial({ color: 0xcc2222 })
                     ));
                     break;
                     
-                case 'switch':
-                    const base = new THREE.Mesh(new THREE.BoxGeometry(0.15, 0.06, 0.1), mat);
-                    g.add(base);
-                    const arm = new THREE.Mesh(new THREE.BoxGeometry(0.12, 0.03, 0.02), new THREE.MeshStandardMaterial({ color: 0x888888 }));
-                    arm.position.y = 0.04;
-                    arm.name = 'switchArm';
-                    g.add(arm);
-                    break;
-                    
-                case 'wire':
-                    const w = new THREE.Mesh(new THREE.CylinderGeometry(0.012, 0.012, 0.35, 8), mat);
-                    w.rotation.z = Math.PI / 2;
-                    g.add(w);
+                case 'generator':
+                    g.add(new THREE.Mesh(new THREE.BoxGeometry(0.35, 0.25, 0.2), m));
+                    const ant = new THREE.Mesh(
+                        new THREE.CylinderGeometry(0.02, 0.02, 0.15, 8),
+                        new THREE.MeshStandardMaterial({ color: 0x888888 })
+                    );
+                    ant.position.y = 0.2;
+                    g.add(ant);
                     break;
             }
             
-            g.traverse(c => { if (c.isMesh) { c.castShadow = true; c.receiveShadow = true; } });
+            g.traverse(c => { if (c.isMesh) { c.castShadow = true; } });
             return g;
         }
         
-        function canPlace(x, z) {
-            return x >= -1.4 && x <= 1.4 && z >= -0.9 && z <= 0.9;
-        }
+        function canP(x, z) { return x >= -1.4 && x <= 1.4 && z >= -0.9 && z <= 0.9; }
         
-        function placeComp(type, val, x, z) {
-            if (!canPlace(x, z)) { showToast('⚠️ Place on breadboard'); return false; }
-            
+        function place(type, val, x, z) {
+            if (!canP(x, z)) { show('Place on breadboard'); return false; }
             for (const c of placedObjs) {
-                const d = Math.sqrt((c.position.x - x) ** 2 + (c.position.z - z) ** 2);
-                if (d < 0.28) { showToast('⚠️ Too close'); return false; }
+                if (Math.sqrt((c.position.x - x) ** 2 + (c.position.z - z) ** 2) < 0.25) { show('Too close'); return false; }
             }
-            
-            const comp = createComp3D(type, val);
-            comp.position.set(x, 1.25, z);
-            scene.add(comp);
-            placedObjs.push(comp);
+            const o = comp3D(type, val);
+            o.position.set(x, 1.25, z);
+            scene.add(o);
+            placedObjs.push(o);
             state.placed.push({ type, val, x, z });
-            
-            // Auto-wire if battery + component
-            if (type === 'battery') {
-                addAutoWire('battery', 'vcc');
-            }
-            
             updateUI();
-            showToast(`✅ ${type} placed`);
+            show('Added ' + type);
             return true;
         }
         
-        function addAutoWire(from, to) {
-            // Simple visual wire
-            const wireMat = new THREE.MeshBasicMaterial({ color: 0x00ff88 });
-            const wire = new THREE.Mesh(new THREE.CylinderGeometry(0.015, 0.015, 0.5, 8), wireMat);
-            wire.rotation.z = Math.PI / 2;
-            wire.position.set(0, 1.22, 0.7);
-            scene.add(wire);
-            wireObjs.push(wire);
-            state.wires.push({ from, to });
-            updateWireCount();
-        }
-        
-        function removeComp(idx) {
+        function rem(idx) {
             scene.remove(placedObjs[idx]);
             placedObjs.splice(idx, 1);
             state.placed.splice(idx, 1);
             updateUI();
         }
         
-        // ===== SIMULATION =====
+        // ===== CALCULATIONS =====
+        function calc() {
+            const R = state.placed.find(c => c.type === 'resistor')?.val || state.r;
+            const L = state.placed.find(c => c.type === 'inductor')?.val || state.l;
+            const C = state.placed.find(c => c.type === 'capacitor')?.val || state.c;
+            const f = state.f;
+            
+            const tauRC = R * C;
+            const tauRL = L / R;
+            const fcRC = 1 / (2 * Math.PI * R * C);
+            const fcRL = R / (2 * Math.PI * L);
+            
+            // RLC resonant
+            const fr = 1 / (2 * Math.PI * Math.sqrt(L * C));
+            const Q = (1 / R) * Math.sqrt(L / C);
+            
+            return { R, L, C, f, tauRC, tauRL, fcRC, fcRL, fr, Q };
+        }
+        
         function canRun() {
             const types = state.placed.map(c => c.type);
-            
-            if (state.circuitType === 'led-blink') {
-                return types.includes('led') && types.includes('resistor') && types.includes('battery');
+            if (state.circuit.includes('rlc')) {
+                return types.includes('resistor') && types.includes('inductor') && types.includes('capacitor');
             }
-            
+            if (state.circuit.includes('rl')) {
+                return types.includes('resistor') && types.includes('inductor');
+            }
+            if (['charge', 'discharge'].includes(state.circuit)) {
+                return types.includes('resistor') && types.includes('capacitor') && types.includes('battery');
+            }
             return types.includes('resistor') && types.includes('capacitor');
         }
         
-        function calc() {
-            const rc = state.placed.find(c => c.type === 'resistor');
-            const cc = state.placed.find(c => c.type === 'capacitor');
-            
-            const R = rc ? rc.val : state.r;
-            const C = cc ? cc.val : state.c;
-            const tau = R * C;
-            const fc = 1 / (2 * Math.PI * R * C);
-            const vTau = 9 * (1 - Math.exp(-1));
-            
-            return { R, C, tau, fc, vTau };
+        function toggleSim() {
+            if (state.running) {
+                stopSim();
+            } else {
+                startSim();
+            }
         }
         
-        function runSim() {
+        function startSim() {
             if (!canRun()) return;
-            
             state.running = true;
             document.getElementById('run-btn').textContent = '⏹ Stop';
-            
-            document.getElementById('power-dot').classList.add('active');
-            document.getElementById('sim-dot').classList.add('active');
-            document.getElementById('sim-status').textContent = 'Running';
+            document.getElementById('pwr-dot').classList.add('on');
+            document.getElementById('sim-dot').classList.add('on');
+            document.getElementById('sim-lbl').textContent = 'Running';
             
             // LED on
             const led = placedObjs.find(c => c.userData.type === 'led');
-            if (led && led.children[0]) {
-                led.children[0].material.emissiveIntensity = 1;
-            }
+            if (led?.children[0]) led.children[0].material.emissiveIntensity = 1;
             
             // Update meters
-            const result = calc();
-            const I = result.R > 0 ? 9 / result.R : 0;
-            const P = 9 * I;
-            
+            const r = calc();
+            const I = r.R > 0 ? 9 / r.R : 0;
             document.getElementById('voltage-val').textContent = '9.00 V';
             document.getElementById('current-val').textContent = (I * 1000).toFixed(2) + ' mA';
-            document.getElementById('power-val').textContent = (P * 1000).toFixed(2) + ' mW';
+            document.getElementById('freq-val').textContent = r.f + ' Hz';
+            document.getElementById('period-val').textContent = (1 / r.f * 1000).toFixed(1) + ' ms';
         }
         
         function stopSim() {
             state.running = false;
             document.getElementById('run-btn').textContent = '▶ Run Simulation';
+            document.getElementById('pwr-dot').classList.remove('on');
+            document.getElementById('sim-dot').classList.remove('on');
+            document.getElementById('sim-lbl').textContent = 'Stopped';
             
-            document.getElementById('power-dot').classList.remove('active');
-            document.getElementById('sim-dot').classList.remove('active');
-            document.getElementById('sim-status').textContent = 'Idle';
-            
-            // LED off
             const led = placedObjs.find(c => c.userData.type === 'led');
-            if (led && led.children[0]) {
-                led.children[0].material.emissiveIntensity = 0.3;
-            }
+            if (led?.children[0]) led.children[0].material.emissiveIntensity = 0.3;
             
             document.getElementById('voltage-val').textContent = '0.00 V';
             document.getElementById('current-val').textContent = '0.00 mA';
-            document.getElementById('power-val').textContent = '0.00 mW';
+            document.getElementById('freq-val').textContent = '0 Hz';
+            document.getElementById('period-val').textContent = '--';
         }
         
-        // ===== CRO ANIMATION =====
-        let croT = 0;
-        
+        // ===== CRO =====
+        let t = 0;
         function animateCRO() {
             const cvs = document.getElementById('cro-canvas');
             const ctx = cvs.getContext('2d');
-            
             if (!cvs.width) { cvs.width = cvs.offsetWidth; cvs.height = cvs.offsetHeight; }
             
             const w = cvs.width, h = cvs.height;
-            croT += 0.016;
+            t += 0.016;
             
             ctx.fillStyle = '#000';
             ctx.fillRect(0, 0, w, h);
@@ -967,7 +847,6 @@
                 ctx.beginPath(); ctx.moveTo(0, i * h / 8); ctx.lineTo(w, i * h / 8); ctx.stroke();
             }
             
-            // Axes
             ctx.strokeStyle = '#222';
             ctx.beginPath(); ctx.moveTo(w/2, 0); ctx.lineTo(w/2, h); ctx.stroke();
             ctx.beginPath(); ctx.moveTo(0, h/2); ctx.lineTo(w, h/2); ctx.stroke();
@@ -975,70 +854,67 @@
             if (state.running && canRun()) {
                 const r = calc();
                 
-                if (state.circuitType === 'charge') {
+                if (state.circuit === 'charge') {
                     ctx.strokeStyle = '#ffff00';
                     ctx.lineWidth = 2;
                     ctx.beginPath();
                     for (let x = 0; x < w; x++) {
-                        const t = (x / w) * r.tau * 8;
-                        const v = 9 * (1 - Math.exp(-t / r.tau));
+                        const tt = (x / w) * r.tauRC * 10;
+                        const v = 9 * (1 - Math.exp(-tt / r.tauRC));
                         const y = h - (v / 9) * (h * 0.8) - 20;
                         x === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y);
                     }
                     ctx.stroke();
-                    
-                    ctx.fillStyle = '#ffff00';
-                    ctx.font = '10px monospace';
-                    ctx.fillText(`τ = ${(r.tau * 1000).toFixed(1)}ms`, 10, 15);
-                    ctx.fillText(`V = 63.2% at τ`, w - 80, 15);
                 }
-                else if (state.circuitType === 'discharge') {
+                else if (state.circuit === 'discharge') {
                     ctx.strokeStyle = '#ff6600';
                     ctx.lineWidth = 2;
                     ctx.beginPath();
                     for (let x = 0; x < w; x++) {
-                        const t = (x / w) * r.tau * 8;
-                        const v = 9 * Math.exp(-t / r.tau);
+                        const tt = (x / w) * r.tauRC * 10;
+                        const v = 9 * Math.exp(-tt / r.tauRC);
                         const y = h - (v / 9) * (h * 0.8) - 20;
                         x === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y);
                     }
                     ctx.stroke();
-                    
-                    ctx.fillStyle = '#ff6600';
-                    ctx.font = '10px monospace';
-                    ctx.fillText(`τ = ${(r.tau * 1000).toFixed(1)}ms`, 10, 15);
                 }
-                else if (state.circuitType === 'led-blink') {
-                    const blink = Math.sin(croT * 10) > 0 ? 1 : 0;
-                    ctx.fillStyle = blink ? '#ff0000' : '#330000';
-                    ctx.fillRect(0, h/2 - 20, w, 40);
-                    ctx.fillStyle = '#ff0000';
-                    ctx.font = '10px monospace';
-                    ctx.fillText('LED BLINKING', w/2 - 40, h/2 + 5);
-                }
-                else {
-                    // Filter response
-                    const color = state.circuitType === 'rc-low' ? '#00ff00' : '#00ff88';
-                    ctx.strokeStyle = color;
+                else if (state.circuit.includes('rlc')) {
+                    // RLC resonance - damped oscillation
+                    ctx.strokeStyle = '#00ffff';
                     ctx.lineWidth = 2;
                     ctx.beginPath();
-                    
-                    const cycles = state.circuitType === 'rc-low' ? 3 : 2;
+                    const damp = Math.exp(-r.R * t / (2 * r.L));
+                    const osc = Math.cos(2 * Math.PI * r.fr * t);
                     for (let x = 0; x < w; x++) {
-                        const y = h/2 + Math.sin((x / w) * cycles * Math.PI * 2 + croT * 3) * h * 0.35;
+                        const tt = (x / w) * 0.02;
+                        const d = Math.exp(-r.R * tt / (2 * r.L));
+                        const o = Math.cos(2 * Math.PI * r.fr * tt);
+                        const y = h/2 + d * o * h * 0.35;
                         x === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y);
                     }
                     ctx.stroke();
-                    
-                    ctx.fillStyle = color;
-                    ctx.font = '10px monospace';
-                    ctx.fillText(`fc = ${r.fc.toFixed(1)} Hz`, 10, 18);
-                    ctx.fillText(`τ = ${(r.tau * 1000).toFixed(1)}ms`, 10, 32);
                 }
+                else {
+                    // Filter response - sine wave
+                    const color = state.circuit.includes('low') ? '#00ff00' : '#00ff88';
+                    ctx.strokeStyle = color;
+                    ctx.lineWidth = 2;
+                    ctx.beginPath();
+                    const cyc = state.circuit.includes('rc') ? 3 : 2;
+                    for (let x = 0; x < w; x++) {
+                        const y = h/2 + Math.sin((x / w) * cyc * Math.PI * 2 + t * 3) * h * 0.35;
+                        x === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y);
+                    }
+                    ctx.stroke();
+                }
+                
+                ctx.fillStyle = '#00ff00';
+                ctx.font = '10px monospace';
+                ctx.fillText('fc = ' + (state.circuit.includes('rl') ? r.fcRL.toFixed(1) : r.fcRC.toFixed(1)) + ' Hz', 8, 15);
             }
             else {
                 ctx.fillStyle = '#333';
-                ctx.font = '12px monospace';
+                ctx.font = '11px monospace';
                 ctx.textAlign = 'center';
                 ctx.fillText('NO SIGNAL', w/2, h/2);
                 ctx.textAlign = 'left';
@@ -1048,100 +924,68 @@
         }
         
         // ===== EVENTS =====
-        function setupEvents() {
-            // Drag from tray
-            document.querySelectorAll('.tray-component').forEach(el => {
+        function events() {
+            document.querySelectorAll('.tray-comp').forEach(el => {
                 el.addEventListener('dragstart', e => {
-                    e.dataTransfer.setData('comp', el.dataset.component);
-                    e.dataTransfer.setData('val', el.dataset.value);
+                    e.dataTransfer.setData('t', el.dataset.type);
+                    e.dataTransfer.setData('v', el.dataset.val);
                 });
             });
             
-            const canvas = document.getElementById('canvas');
-            
-            canvas.addEventListener('dragover', e => { e.preventDefault(); });
-            
-            canvas.addEventListener('drop', e => {
+            const cvs = document.getElementById('canvas');
+            cvs.addEventListener('dragover', e => { e.preventDefault(); });
+            cvs.addEventListener('drop', e => {
                 e.preventDefault();
-                const type = e.dataTransfer.getData('comp');
-                const val = parseFloat(e.dataTransfer.getData('val'));
-                
-                const rect = canvas.getBoundingClientRect();
+                const type = e.dataTransfer.getData('t');
+                const val = parseFloat(e.dataTransfer.getData('v'));
+                const rect = cvs.getBoundingClientRect();
                 raycaster.setFromCamera({
                     x: ((e.clientX - rect.left) / rect.width) * 2 - 1,
                     y: -((e.clientY - rect.top) / rect.height) * 2 + 1
                 }, camera);
-                
-                const hit = raycaster.intersectObjects([breadboard]);
-                if (hit.length > 0) {
-                    placeComp(type, val, hit[0].point.x, hit[0].point.z);
-                }
+                const hit = raycaster.intersectObjects([board]);
+                if (hit.length > 0) place(type, val, hit[0].point.x, hit[0].point.z);
             });
             
-            // Mouse controls
-            canvas.addEventListener('mousedown', e => {
-                isMouseDown = true;
-                lastX = e.clientX; lastY = e.clientY;
+            cvs.addEventListener('mousedown', e => { isMouse = true; lx = e.clientX; ly = e.clientY; });
+            cvs.addEventListener('mousemove', e => {
+                if (!isMouse) return;
+                ca += (e.clientX - lx) * 0.005;
+                ch = Math.max(3, Math.min(20, ch - (e.clientY - ly) * 0.03));
+                lx = e.clientX; ly = e.clientY;
+                upCam();
             });
+            cvs.addEventListener('mouseup', () => { isMouse = false; });
+            cvs.addEventListener('wheel', e => { cd = Math.max(5, Math.min(25, cd + e.deltaY * 0.01)); upCam(); });
             
-            canvas.addEventListener('mousemove', e => {
-                if (!isMouseDown) return;
-                const dx = e.clientX - lastX;
-                const dy = e.clientY - lastY;
-                camAngle += dx * 0.005;
-                camHeight = Math.max(3, Math.min(20, camHeight - dy * 0.03));
-                lastX = e.clientX; lastY = e.clientY;
-                updateCam();
-            });
-            
-            canvas.addEventListener('mouseup', () => { isMouseDown = false; });
-            
-            canvas.addEventListener('wheel', e => {
-                camDist = Math.max(5, Math.min(25, camDist + e.deltaY * 0.01));
-                updateCam();
-            });
-            
-            // Mode buttons
-            document.querySelectorAll('.mode-btn').forEach(b => {
-                b.addEventListener('click', () => {
-                    document.querySelectorAll('.mode-btn').forEach(x => x.classList.remove('active'));
-                    b.classList.add('active');
-                    state.mode = b.dataset.mode;
-                    
-                    if (state.mode === 'run') {
-                        if (state.running) stopSim(); else runSim();
-                    }
-                    else if (state.mode === 'worksheet') toggleWorksheet();
-                    else if (state.mode === 'reset') resetAll();
-                });
-            });
-            
-            // Circuit buttons
             document.querySelectorAll('.circuit-btn').forEach(b => {
                 b.addEventListener('click', () => {
                     document.querySelectorAll('.circuit-btn').forEach(x => x.classList.remove('active'));
                     b.classList.add('active');
-                    state.circuitType = b.dataset.circuit;
+                    state.circuit = b.dataset.ckt;
                     updateUI();
                 });
             });
             
-            // Sliders
-            document.getElementById('r-slider').addEventListener('input', e => {
+            document.getElementById('r-sldr').addEventListener('input', e => {
                 state.r = parseInt(e.target.value) * 1000;
-                document.getElementById('r-display').textContent = e.target.value + 'KΩ';
+                document.getElementById('r-disp').textContent = e.target.value + 'KΩ';
                 updateUI();
             });
-            
-            document.getElementById('c-slider').addEventListener('input', e => {
+            document.getElementById('l-sldr').addEventListener('input', e => {
+                state.l = parseInt(e.target.value) * 0.001;
+                document.getElementById('l-disp').textContent = e.target.value + 'mH';
+                updateUI();
+            });
+            document.getElementById('c-sldr').addEventListener('input', e => {
                 state.c = parseInt(e.target.value) * 0.000001;
-                document.getElementById('c-display').textContent = e.target.value + 'µF';
+                document.getElementById('c-disp').textContent = e.target.value + 'µF';
                 updateUI();
             });
-            
-            // Run button
-            document.getElementById('run-btn').addEventListener('click', () => {
-                if (state.running) stopSim(); else runSim();
+            document.getElementById('f-sldr').addEventListener('input', e => {
+                state.f = parseInt(e.target.value) * 100;
+                document.getElementById('f-disp').textContent = (parseInt(e.target.value) / 10).toFixed(1) + 'KHz';
+                updateUI();
             });
             
             window.addEventListener('resize', () => {
@@ -1151,19 +995,20 @@
             });
         }
         
-        function updateCam() {
-            camera.position.x = Math.sin(camAngle) * camDist;
-            camera.position.z = Math.cos(camAngle) * camDist;
-            camera.position.y = camHeight;
+        function upCam() {
+            camera.position.x = Math.sin(ca) * cd;
+            camera.position.z = Math.cos(ca) * cd;
+            camera.position.y = ch;
             camera.lookAt(0, 1, 0);
         }
         
         // ===== UI =====
         function updateUI() {
             const r = calc();
-            document.getElementById('tau-result').textContent = (r.tau * 1000).toFixed(2) + ' ms';
-            document.getElementById('fc-result').textContent = r.fc.toFixed(1) + ' Hz';
-            document.getElementById('v-result').textContent = r.vTau.toFixed(2) + ' V';
+            document.getElementById('tau-r').textContent = r.tauRC > 1 ? (r.tauRC * 1000).toFixed(1) + ' ms' : (r.tauRC * 1000000).toFixed(1) + ' µs';
+            document.getElementById('fc-r').textContent = r.fcRC.toFixed(1) + ' Hz';
+            document.getElementById('fr-r').textContent = state.circuit.includes('rlc') ? r.fr.toFixed(1) + ' Hz' : '--';
+            document.getElementById('q-r').textContent = state.circuit.includes('rlc') ? r.Q.toFixed(2) : '--';
             
             document.getElementById('run-btn').disabled = !canRun();
             
@@ -1172,56 +1017,38 @@
             state.placed.forEach((c, i) => {
                 let v = c.val;
                 if (c.type === 'resistor') v = (c.val / 1000) + 'K';
+                else if (c.type === 'inductor') v = (c.val * 1000) + 'm';
                 else if (c.type === 'capacitor') v = (c.val * 1000000) + 'µ';
                 else if (c.type === 'battery') v = c.val + 'V';
                 
-                list.innerHTML += \`<div class="placed-item"><div class="info"><span>\${getIcon(c.type)}</span><span>\${c.type} \${v}</span></div><button class="remove-btn" onclick="removeComp(\${i})">×</button></div>\`;
+                const icon = { resistor: '⚡', inductor: '🧲', capacitor: '🔋', led: '🔴', battery: '🔌', generator: '🎵' }[c.type] || '📦';
+                list.innerHTML += '<div class="placed-item"><span>' + icon + ' ' + c.type + ' ' + v + '</span><button class="btn-x" onclick="rem(' + i + ')">×</button></div>';
             });
-            
-            document.getElementById('wire-status').textContent = state.wires.length + ' wires';
         }
         
-        function getIcon(t) {
-            return { resistor: '⚡', capacitor: '🔋', led: '🔴', battery: '🔌', switch: '⬛', wire: '〰️' }[t] || '📦';
+        function show(msg) {
+            const to = document.getElementById('toast');
+            to.textContent = msg;
+            to.classList.add('show');
+            setTimeout(() => to.classList.remove('show'), 2000);
         }
         
-        function showToast(msg) {
-            const t = document.getElementById('toast');
-            t.textContent = msg;
-            t.classList.add('show');
-            setTimeout(() => t.classList.remove('show'), 2000);
+        function toggleInfo() {
+            alert('ADVANCED ELECTRONICS LAB\n\nCircuits: RC, RL, RLC\nComponents: R, L, C, LED, Battery, Signal Gen\n\nDrag components to breadboard\nSelect circuit type\nClick Run to simulate');
         }
         
-        function updateWireCount() {
-            document.getElementById('wire-status').textContent = state.wires.length + ' wires';
-            document.getElementById('wire-dot').classList.add('active');
-        }
-        
-        function toggleWorksheet() {
-            document.getElementById('worksheet-panel').classList.toggle('show');
-        }
-        
-        function checkAnswers() {
-            const inputs = document.querySelectorAll('#worksheet-panel input');
-            let correct = 0;
-            inputs.forEach(inp => {
-                const ans = inp.value.toLowerCase().trim();
-                const expected = inp.dataset.answer.toLowerCase();
-                if (ans === expected || ans.includes(expected)) correct++;
-            });
-            alert(\`You got \${correct}/\${inputs.length} correct!\`);
-        }
-        
-        function resetAll() {
-            placedObjs.forEach(c => scene.remove(c));
-            wireObjs.forEach(c => scene.remove(c));
-            placedObjs = [];
-            wireObjs = [];
-            state.placed = [];
-            state.wires = [];
-            if (state.running) stopSim();
-            updateUI();
-            showToast('🔄 Reset complete');
+        function enterVR() {
+            if (navigator.xr) {
+                navigator.xr.isSessionSupported('immersive-vr').then(s => {
+                    if (s) {
+                        alert('VR Mode: Open this page in Quest 3 browser at the HTTPS URL for immersive VR.');
+                    } else {
+                        show('VR not supported. Deploy to HTTPS first.');
+                    }
+                });
+            } else {
+                show('WebXR not available. Open in Quest browser.');
+            }
         }
         
         function animate() {
