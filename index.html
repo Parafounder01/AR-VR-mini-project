@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Virtual Electronics Lab - Interactive RC Circuit</title>
+    <title>Virtual Electronics Lab - Interactive RC Circuit Builder</title>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600&family=Space+Grotesk:wght@400;600;700&display=swap');
         
@@ -18,6 +18,7 @@
             --text-secondary: #888;
             --success: #00ff88;
             --warning: #ffaa00;
+            --error: #ff4444;
         }
         
         * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -31,41 +32,20 @@
             cursor: crosshair;
         }
         
-        #canvas { 
-            width: 100%; 
-            height: 100%; 
-            display: block; 
-            cursor: grab;
-        }
-        
+        #canvas { width: 100%; height: 100%; display: block; cursor: grab; }
         #canvas:active { cursor: grabbing; }
         
-        /* ===== UI OVERLAY ===== */
-        .ui-overlay {
-            position: fixed;
-            pointer-events: none;
-            z-index: 100;
-        }
-        
-        .ui-overlay > * {
-            pointer-events: auto;
-        }
-        
-        /* Header */
         .header {
-            position: fixed;
-            top: 0; left: 0; right: 0;
-            padding: 16px 24px;
+            position: fixed; top: 0; left: 0; right: 0;
+            padding: 14px 24px;
             background: linear-gradient(180deg, rgba(10,10,15,0.95) 0%, transparent 100%);
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
+            display: flex; justify-content: space-between; align-items: center;
             z-index: 100;
         }
         
         .logo {
             font-family: 'JetBrains Mono', monospace;
-            font-size: 16px;
+            font-size: 15px;
             font-weight: 600;
             background: linear-gradient(90deg, var(--accent-pink), var(--success));
             -webkit-background-clip: text;
@@ -73,113 +53,66 @@
             background-clip: text;
         }
         
-        .status-bar {
-            display: flex;
-            gap: 16px;
-            font-size: 11px;
-        }
+        .status-bar { display: flex; gap: 12px; font-size: 10px; }
         
         .status-item {
-            display: flex;
-            align-items: center;
-            gap: 6px;
-            padding: 6px 12px;
+            display: flex; align-items: center; gap: 6px;
+            padding: 5px 10px;
             background: rgba(255,255,255,0.05);
             border-radius: 20px;
         }
         
-        .status-dot {
-            width: 6px;
-            height: 6px;
-            border-radius: 50%;
-            background: var(--text-secondary);
-        }
+        .status-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--text-secondary); }
+        .status-dot.active { background: var(--success); box-shadow: 0 0 8px var(--success); }
         
-        .status-dot.active { background: var(--success); }
-        .status-dot.warning { background: var(--warning); }
-        
-        /* Component Tray */
         .component-tray {
-            position: fixed;
-            left: 20px;
-            top: 80px;
-            width: 100px;
-            background: var(--bg-panel);
-            border: 1px solid #2a2a35;
-            border-radius: 12px;
-            padding: 12px;
-            display: flex;
-            flex-direction: column;
-            gap: 8px;
+            position: fixed; left: 16px; top: 70px; width: 90px;
+            background: var(--bg-panel); border: 1px solid #2a2a35;
+            border-radius: 10px; padding: 10px;
+            display: flex; flex-direction: column; gap: 6px;
         }
         
-        .component-tray-title {
-            font-size: 9px;
-            color: var(--text-secondary);
-            text-transform: uppercase;
-            letter-spacing: 1px;
-            text-align: center;
-            margin-bottom: 4px;
+        .tray-title {
+            font-size: 9px; color: var(--text-secondary);
+            text-transform: uppercase; letter-spacing: 1px;
+            text-align: center; margin-bottom: 4px;
         }
         
         .tray-component {
-            width: 76px;
-            height: 60px;
+            width: 70px; height: 54px;
             background: rgba(255,255,255,0.03);
             border: 1px solid #2a2a35;
-            border-radius: 8px;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            cursor: grab;
-            transition: all 0.2s ease;
+            border-radius: 6px;
+            display: flex; flex-direction: column;
+            align-items: center; justify-content: center;
+            cursor: grab; transition: all 0.2s ease;
             user-select: none;
         }
         
         .tray-component:hover {
             border-color: var(--accent-pink);
-            background: rgba(255, 112, 191, 0.1);
+            background: rgba(255, 112, 191, 0.15);
             transform: scale(1.05);
         }
         
-        .tray-component.dragging {
-            opacity: 0.5;
-            cursor: grabbing;
-        }
+        .tray-component .icon { font-size: 22px; margin-bottom: 2px; }
+        .tray-component .name { font-size: 8px; color: var(--text-primary); }
         
-        .tray-component .icon {
-            font-size: 24px;
-            margin-bottom: 4px;
-        }
-        
-        .tray-component .name {
-            font-size: 9px;
-            color: var(--text-primary);
-        }
-        
-        /* Mode Buttons */
         .mode-panel {
-            position: fixed;
-            left: 20px;
-            bottom: 20px;
-            display: flex;
-            flex-direction: column;
-            gap: 8px;
+            position: fixed; left: 16px; bottom: 16px;
+            display: flex; flex-direction: column; gap: 6px;
         }
         
         .mode-btn {
-            padding: 12px 16px;
+            padding: 10px 14px;
             background: var(--bg-panel);
             border: 1px solid #2a2a35;
-            border-radius: 8px;
+            border-radius: 6px;
             color: var(--text-primary);
-            font-size: 11px;
+            font-size: 10px;
             cursor: pointer;
             transition: all 0.2s ease;
-            display: flex;
-            align-items: center;
-            gap: 8px;
+            display: flex; align-items: center; gap: 6px;
         }
         
         .mode-btn:hover, .mode-btn.active {
@@ -187,100 +120,62 @@
             background: rgba(255, 112, 191, 0.15);
         }
         
-        .mode-btn.active {
-            box-shadow: 0 0 15px rgba(255, 112, 191, 0.3);
-        }
-        
-        /* Circuit Builder Panel */
         .circuit-panel {
-            position: fixed;
-            right: 20px;
-            top: 80px;
-            width: 280px;
-            background: var(--bg-panel);
-            border: 1px solid #2a2a35;
-            border-radius: 12px;
-            padding: 16px;
-            max-height: calc(100vh - 120px);
-            overflow-y: auto;
+            position: fixed; right: 16px; top: 70px; width: 260px;
+            background: var(--bg-panel); border: 1px solid #2a2a35;
+            border-radius: 10px; padding: 14px;
+            max-height: calc(100vh - 100px); overflow-y: auto;
         }
         
         .panel-title {
-            font-size: 11px;
-            color: var(--accent-pink);
-            text-transform: uppercase;
-            letter-spacing: 1px;
-            margin-bottom: 16px;
-            display: flex;
-            align-items: center;
-            gap: 8px;
+            font-size: 10px; color: var(--accent-pink);
+            text-transform: uppercase; letter-spacing: 1px;
+            margin-bottom: 12px;
+            display: flex; align-items: center; gap: 6px;
         }
         
         .panel-title::before {
-            content: '';
-            width: 3px;
-            height: 12px;
-            background: var(--accent-pink);
-            border-radius: 2px;
+            content: ''; width: 3px; height: 12px;
+            background: var(--accent-pink); border-radius: 2px;
         }
         
-        /* Placed Components */
-        .placed-components {
-            display: flex;
-            flex-direction: column;
-            gap: 8px;
-            margin-bottom: 16px;
+        .placed-list {
+            display: flex; flex-direction: column; gap: 6px;
+            margin-bottom: 12px;
+            max-height: 120px; overflow-y: auto;
         }
         
         .placed-item {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            padding: 10px;
+            display: flex; align-items: center; justify-content: space-between;
+            padding: 8px;
             background: rgba(255,255,255,0.03);
             border: 1px solid #2a2a35;
-            border-radius: 6px;
+            border-radius: 5px;
+            font-size: 11px;
+        }
+        
+        .placed-item .info { display: flex; align-items: center; gap: 6px; }
+        .placed-item .remove-btn {
+            width: 20px; height: 20px;
+            background: rgba(255, 50, 50, 0.2);
+            border: none; border-radius: 3px;
+            color: #ff6666; cursor: pointer;
             font-size: 12px;
         }
         
-        .placed-item .info {
-            display: flex;
-            align-items: center;
-            gap: 8px;
-        }
-        
-        .placed-item .remove-btn {
-            width: 24px;
-            height: 24px;
-            background: rgba(255, 50, 50, 0.2);
-            border: none;
-            border-radius: 4px;
-            color: #ff6666;
-            cursor: pointer;
-            font-size: 14px;
-        }
-        
-        .placed-item .remove-btn:hover {
-            background: rgba(255, 50, 50, 0.4);
-        }
-        
-        /* Circuit Type Selector */
         .circuit-selector {
-            display: flex;
-            gap: 4px;
-            margin-bottom: 16px;
+            display: grid; grid-template-columns: repeat(2, 1fr); gap: 4px;
+            margin-bottom: 12px;
         }
         
         .circuit-btn {
-            flex: 1;
-            padding: 10px 8px;
+            padding: 8px;
             background: transparent;
             border: 1px solid #2a2a35;
-            border-radius: 6px;
+            border-radius: 5px;
             color: var(--text-secondary);
-            font-size: 10px;
-            cursor: pointer;
-            transition: all 0.2s ease;
+            font-size: 9px;
+            cursor: pointer; transition: all 0.2s ease;
         }
         
         .circuit-btn.active {
@@ -289,20 +184,11 @@
             color: white;
         }
         
-        .circuit-btn:hover:not(.active) {
-            border-color: var(--accent-pink);
-        }
-        
-        /* Sliders */
-        .slider-group {
-            margin-bottom: 16px;
-        }
+        .slider-group { margin-bottom: 12px; }
         
         .slider-label {
-            display: flex;
-            justify-content: space-between;
-            font-size: 11px;
-            margin-bottom: 8px;
+            display: flex; justify-content: space-between;
+            font-size: 10px; margin-bottom: 6px;
         }
         
         .slider-label .value {
@@ -311,58 +197,43 @@
         }
         
         input[type="range"] {
-            width: 100%;
-            height: 6px;
+            width: 100%; height: 5px;
             -webkit-appearance: none;
             background: #2a2a35;
-            border-radius: 3px;
-            outline: none;
+            border-radius: 3px; outline: none;
         }
         
         input[type="range"]::-webkit-slider-thumb {
             -webkit-appearance: none;
-            width: 16px;
-            height: 16px;
+            width: 14px; height: 14px;
             border-radius: 50%;
             background: linear-gradient(135deg, var(--accent-pink), var(--accent-magenta));
             cursor: pointer;
         }
         
-        /* Simulation Results */
         .sim-results {
             background: rgba(0,0,0,0.3);
-            border-radius: 8px;
-            padding: 12px;
-            margin-bottom: 16px;
+            border-radius: 6px; padding: 10px;
+            margin-bottom: 12px;
         }
         
         .result-row {
-            display: flex;
-            justify-content: space-between;
-            font-size: 11px;
-            margin-bottom: 6px;
+            display: flex; justify-content: space-between;
+            font-size: 10px; margin-bottom: 4px;
         }
         
-        .result-row .label {
-            color: var(--text-secondary);
-        }
-        
+        .result-row .label { color: var(--text-secondary); }
         .result-row .value {
             font-family: 'JetBrains Mono', monospace;
             color: var(--success);
         }
         
-        /* Run Button */
         .run-btn {
-            width: 100%;
-            padding: 14px;
+            width: 100%; padding: 12px;
             background: linear-gradient(135deg, var(--accent-purple), var(--accent-magenta));
-            border: none;
-            border-radius: 8px;
-            color: white;
-            font-size: 13px;
-            font-weight: 600;
-            cursor: pointer;
+            border: none; border-radius: 6px;
+            color: white; font-size: 12px;
+            font-weight: 600; cursor: pointer;
             transition: all 0.3s ease;
         }
         
@@ -372,132 +243,146 @@
         }
         
         .run-btn:disabled {
-            opacity: 0.5;
-            cursor: not-allowed;
+            opacity: 0.5; cursor: not-allowed;
             transform: none;
         }
         
-        /* CRO Display */
         .cro-panel {
-            position: fixed;
-            right: 20px;
-            bottom: 20px;
-            width: 400px;
-            height: 220px;
+            position: fixed; right: 16px; bottom: 16px;
+            width: 380px; height: 200px;
             background: var(--bg-panel);
             border: 1px solid #2a2a35;
-            border-radius: 12px;
-            padding: 12px;
+            border-radius: 10px; padding: 10px;
         }
         
         .cro-display {
-            width: 100%;
-            height: 160px;
+            width: 100%; height: 150px;
             background: #000;
-            border-radius: 6px;
+            border-radius: 5px;
             border: 1px solid #222;
         }
         
-        .cro-channels {
-            position: absolute;
-            top: 16px;
-            right: 24px;
-            display: flex;
-            gap: 12px;
-            z-index: 10;
+        .measure-panel {
+            position: fixed; left: 16px; top: 320px;
+            width: 90px;
+            background: var(--bg-panel);
+            border: 1px solid #2a2a35;
+            border-radius: 10px; padding: 10px;
         }
         
-        .channel-indicator {
-            font-size: 9px;
-            color: var(--text-secondary);
-            display: flex;
-            align-items: center;
-            gap: 4px;
+        .measure-item {
+            text-align: center; padding: 6px;
+            margin-bottom: 6px;
+            background: rgba(0,0,0,0.3);
+            border-radius: 5px;
         }
         
-        .channel-dot {
-            width: 6px;
-            height: 6px;
-            border-radius: 50%;
+        .measure-item .label {
+            font-size: 8px; color: var(--text-secondary);
         }
         
-        .channel-dot.ch1 { background: var(--success); }
-        .channel-dot.ch2 { background: var(--accent-pink); }
+        .measure-item .value {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 12px;
+            color: var(--success);
+        }
         
-        /* Instructions */
-        .instructions {
+        .worksheet-panel {
             position: fixed;
-            bottom: 20px;
-            left: 50%;
+            top: 50%; left: 50%;
+            transform: translate(-50%, -50%);
+            width: 500px; max-height: 80vh;
+            background: var(--bg-panel);
+            border: 1px solid var(--accent-purple);
+            border-radius: 12px; padding: 20px;
+            z-index: 300;
+            display: none;
+            overflow-y: auto;
+        }
+        
+        .worksheet-panel.show { display: block; }
+        
+        .worksheet-panel h3 {
+            color: var(--accent-pink);
+            margin-bottom: 16px;
+        }
+        
+        .worksheet-panel .question {
+            padding: 12px;
+            background: rgba(0,0,0,0.3);
+            border-radius: 8px;
+            margin-bottom: 12px;
+        }
+        
+        .worksheet-panel .q-num {
+            color: var(--accent-pink);
+            font-weight: 600;
+            margin-right: 8px;
+        }
+        
+        .worksheet-panel .q-text {
+            font-size: 13px; margin-bottom: 8px;
+        }
+        
+        .worksheet-panel input[type="text"] {
+            width: 100%; padding: 8px;
+            background: #1a1a25;
+            border: 1px solid #2a2a35;
+            border-radius: 5px;
+            color: var(--text-primary);
+            font-size: 12px;
+        }
+        
+        .worksheet-close {
+            position: absolute; top: 12px; right: 12px;
+            width: 28px; height: 28px;
+            background: rgba(255,255,255,0.1);
+            border: none; border-radius: 5px;
+            color: var(--text-primary); cursor: pointer;
+            font-size: 16px;
+        }
+        
+        .instructions {
+            position: fixed; bottom: 16px; left: 50%;
             transform: translateX(-50%);
             background: var(--bg-panel);
             border: 1px solid #2a2a35;
-            border-radius: 8px;
-            padding: 12px 20px;
-            font-size: 11px;
+            border-radius: 6px;
+            padding: 10px 16px;
+            font-size: 10px;
             color: var(--text-secondary);
-            display: flex;
-            align-items: center;
-            gap: 20px;
-            z-index: 100;
+            display: flex; gap: 16px;
         }
         
-        .instruction-item {
-            display: flex;
-            align-items: center;
-            gap: 6px;
-        }
+        .instruction-item { display: flex; align-items: center; gap: 4px; }
         
         .instruction-key {
-            padding: 3px 8px;
+            padding: 2px 6px;
             background: rgba(255,255,255,0.1);
-            border-radius: 4px;
-            font-size: 10px;
-            color: var(--text-primary);
+            border-radius: 3px;
+            font-size: 9px;
         }
         
-        /* Drag Preview */
-        .drag-preview {
-            position: fixed;
-            pointer-events: none;
-            z-index: 1000;
-            font-size: 40px;
-            opacity: 0.8;
-            display: none;
-        }
-        
-        /* Toast Messages */
         .toast {
-            position: fixed;
-            top: 80px;
-            left: 50%;
+            position: fixed; top: 70px; left: 50%;
             transform: translateX(-50%);
-            padding: 12px 24px;
+            padding: 10px 20px;
             background: var(--accent-purple);
-            border-radius: 8px;
-            font-size: 12px;
+            border-radius: 6px;
+            font-size: 11px;
             z-index: 200;
             display: none;
-            animation: toastIn 0.3s ease;
         }
         
-        .toast.show { display: block; }
+        .toast.show { display: block; animation: toastIn 0.3s ease; }
         
         @keyframes toastIn {
-            from { opacity: 0; transform: translateX(-50%) translateY(-20px); }
+            from { opacity: 0; transform: translateX(-50%) translateY(-10px); }
             to { opacity: 1; transform: translateX(-50%) translateY(0); }
         }
         
-        /* Missing components warning */
-        .missing-warning {
-            padding: 10px;
-            background: rgba(255, 170, 0, 0.1);
-            border: 1px solid rgba(255, 170, 0, 0.3);
-            border-radius: 6px;
-            font-size: 11px;
-            color: var(--warning);
-            margin-bottom: 12px;
-        }
+        ::-webkit-scrollbar { width: 5px; }
+        ::-webkit-scrollbar-thumb { background: #333; border-radius: 3px; }
     </style>
 </head>
 <body>
@@ -512,8 +397,8 @@
                 <span>Power</span>
             </div>
             <div class="status-item">
-                <div class="status-dot" id="circuit-dot"></div>
-                <span id="circuit-status">No Circuit</span>
+                <div class="status-dot" id="wire-dot"></div>
+                <span id="wire-status">0 wires</span>
             </div>
             <div class="status-item">
                 <div class="status-dot" id="sim-dot"></div>
@@ -524,11 +409,11 @@
     
     <!-- Component Tray -->
     <div class="component-tray">
-        <div class="component-tray-title">Components</div>
+        <div class="tray-title">Components</div>
         
         <div class="tray-component" draggable="true" data-component="resistor" data-value="10000">
             <div class="icon">⚡</div>
-            <div class="name">10KΩ Resistor</div>
+            <div class="name">10K Res</div>
         </div>
         
         <div class="tray-component" draggable="true" data-component="capacitor" data-value="0.000001">
@@ -536,69 +421,85 @@
             <div class="name">1µF Cap</div>
         </div>
         
-        <div class="tray-component" draggable="true" data-component="capacitor" data-value="0.00001">
+        <div class="tray-component" draggable="true" data-component="capacitor" data-value="0.000047">
             <div class="icon">🔋</div>
-            <div class="name">10µF Cap</div>
+            <div class="name">47µF Cap</div>
         </div>
         
         <div class="tray-component" draggable="true" data-component="led" data-value="2">
-            <div class="icon">💡</div>
+            <div class="icon">🔴</div>
             <div class="name">LED</div>
         </div>
         
         <div class="tray-component" draggable="true" data-component="battery" data-value="9">
             <div class="icon">🔌</div>
-            <div class="name">9V Battery</div>
+            <div class="name">9V Batt</div>
         </div>
         
-        <div class="tray-component" draggable="true" data-component="wire">
+        <div class="tray-component" draggable="true" data-component="switch" data-value="1">
+            <div class="icon">⬛</div>
+            <div class="name">Switch</div>
+        </div>
+        
+        <div class="tray-component" draggable="true" data-component="wire" data-value="0">
             <div class="icon">〰️</div>
             <div class="name">Wire</div>
         </div>
     </div>
     
-    <!-- Mode Buttons -->
-    <div class="mode-panel">
-        <button class="mode-btn active" data-mode="place">
-            <span>📦</span> Place
-        </button>
-        <button class="mode-btn" data-mode="wire">
-            <span>〰️</span> Wire
-        </button>
-        <button class="mode-btn" data-mode="run">
-            <span>▶️</span> Run
-        </button>
-        <button class="mode-btn" data-mode="view">
-            <span>🔄</span> Reset
-        </button>
+    <!-- Measurement Panel -->
+    <div class="measure-panel">
+        <div class="panel-title">Meters</div>
+        
+        <div class="measure-item">
+            <div class="label">Voltage (V)</div>
+            <div class="value" id="voltage-val">0.00 V</div>
+        </div>
+        
+        <div class="measure-item">
+            <div class="label">Current (I)</div>
+            <div class="value" id="current-val">0.00 mA</div>
+        </div>
+        
+        <div class="measure-item">
+            <div class="label">Power (P)</div>
+            <div class="value" id="power-val">0.00 mW</div>
+        </div>
     </div>
     
-    <!-- Circuit Builder Panel -->
+    <!-- Mode Buttons -->
+    <div class="mode-panel">
+        <button class="mode-btn active" data-mode="place">📦 Place</button>
+        <button class="mode-btn" data-mode="wire">〰️ Wire</button>
+        <button class="mode-btn" data-mode="run">▶️ Run</button>
+        <button class="mode-btn" data-mode="worksheet">📝 Worksheet</button>
+        <button class="mode-btn" data-mode="reset">🔄 Reset</button>
+    </div>
+    
+    <!-- Circuit Builder -->
     <div class="circuit-panel">
         <div class="panel-title">Circuit Builder</div>
         
-        <div class="missing-warning" id="missing-warning">
-            ⚠️ Add at least R + C + Power to run simulation
-        </div>
-        
-        <div class="placed-components" id="placed-components">
+        <div class="placed-list" id="placed-list">
             <!-- Placed components appear here -->
         </div>
         
-        <div class="panel-title" style="margin-top: 16px;">Circuit Type</div>
+        <div class="panel-title" style="margin-top: 12px;">Circuit Type</div>
         
         <div class="circuit-selector">
-            <button class="circuit-btn active" data-circuit="rc-low">Low-Pass</button>
-            <button class="circuit-btn" data-circuit="rc-high">High-Pass</button>
+            <button class="circuit-btn active" data-circuit="rc-low">RC Low-Pass</button>
+            <button class="circuit-btn" data-circuit="rc-high">RC High-Pass</button>
             <button class="circuit-btn" data-circuit="charge">Charge</button>
             <button class="circuit-btn" data-circuit="discharge">Discharge</button>
+            <button class="circuit-btn" data-circuit="vdivider">Voltage Div</button>
+            <button class="circuit-btn" data-circuit="led-blink">LED Blink</button>
         </div>
         
-        <div class="panel-title" style="margin-top: 16px;">Values (if not using placed)</div>
+        <div class="panel-title" style="margin-top: 12px;">Manual Values</div>
         
         <div class="slider-group">
             <div class="slider-label">
-                <span>Resistance</span>
+                <span>R</span>
                 <span class="value" id="r-display">10KΩ</span>
             </div>
             <input type="range" id="r-slider" min="1" max="100" value="10">
@@ -606,7 +507,7 @@
         
         <div class="slider-group">
             <div class="slider-label">
-                <span>Capacitance</span>
+                <span>C</span>
                 <span class="value" id="c-display">1µF</span>
             </div>
             <input type="range" id="c-slider" min="1" max="100" value="1">
@@ -614,15 +515,15 @@
         
         <div class="sim-results" id="sim-results">
             <div class="result-row">
-                <span class="label">Time Constant (τ)</span>
+                <span class="label">τ (tau)</span>
                 <span class="value" id="tau-result">--</span>
             </div>
             <div class="result-row">
-                <span class="label">Cutoff Freq (fc)</span>
+                <span class="label">fc</span>
                 <span class="value" id="fc-result">--</span>
             </div>
             <div class="result-row">
-                <span class="label">Voltage @ t=τ</span>
+                <span class="label">V@τ</span>
                 <span class="value" id="v-result">--</span>
             </div>
         </div>
@@ -633,565 +534,471 @@
     <!-- CRO Display -->
     <div class="cro-panel">
         <div class="panel-title">CRO Oscilloscope</div>
-        <div class="cro-channels">
-            <div class="channel-indicator"><div class="channel-dot ch1"></div>CH1</div>
-            <div class="channel-indicator"><div class="channel-dot ch2"></div>CH2</div>
-        </div>
         <canvas class="cro-display" id="cro-canvas"></canvas>
+    </div>
+    
+    <!-- Worksheet Panel -->
+    <div class="worksheet-panel" id="worksheet-panel">
+        <button class="worksheet-close" onclick="toggleWorksheet()">×</button>
+        <h3>📝 RC Circuit Student Worksheet</h3>
+        
+        <div class="question">
+            <span class="q-num">Q1.</span>
+            <span class="q-text">What is the time constant (τ) of an RC circuit with R=10KΩ and C=47µF?</span>
+            <input type="text" placeholder="Your answer (in ms)..." data-answer="470">
+        </div>
+        
+        <div class="question">
+            <span class="q-num">Q2.</span>
+            <span class="q-text">What is the cutoff frequency for R=10KΩ and C=1µF?</span>
+            <input type="text" placeholder="Your answer (in Hz)..." data-answer="15.9">
+        </div>
+        
+        <div class="question">
+            <span class="q-num">Q3.</span>
+            <span class="q-text">After one time constant, what percentage of final voltage is reached?</span>
+            <input type="text" placeholder="Your answer (%)..." data-answer="63.2">
+        </div>
+        
+        <div class="question">
+            <span class="q-num">Q4.</span>
+            <span class="q-text">In a high-pass RC filter, what happens to low frequency signals?</span>
+            <input type="text" placeholder="Your answer..." data-answer="blocked">
+        </div>
+        
+        <div class="question">
+            <span class="q-num">Q5.</span>
+            <span class="q-text">What component stores energy in an electric field?</span>
+            <input type="text" placeholder="Your answer..." data-answer="capacitor">
+        </div>
+        
+        <button class="run-btn" onclick="checkAnswers()">✅ Check Answers</button>
     </div>
     
     <!-- Instructions -->
     <div class="instructions">
         <div class="instruction-item">
-            <span class="instruction-key">Drag</span> Add component to breadboard
+            <span class="instruction-key">Drag</span> Add to board
         </div>
         <div class="instruction-item">
-            <span class="instruction-key">Click</span> Select/Wire mode
+            <span class="instruction-key">Click</span> Select
+        </div>
+        <div class="instruction-item">
+            <span class="instruction-key">Right-drag</span> Rotate
         </div>
         <div class="instruction-item">
             <span class="instruction-key">Scroll</span> Zoom
         </div>
-        <div class="instruction-item">
-            <span class="instruction-key">Right-drag</span> Rotate view
-        </div>
     </div>
-    
-    <!-- Drag Preview -->
-    <div class="drag-preview" id="drag-preview"></div>
     
     <!-- Toast -->
     <div class="toast" id="toast"></div>
 
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
     <script>
-        // ==================== STATE ====================
+        // ===== STATE =====
         const state = {
             mode: 'place',
             circuitType: 'rc-low',
-            placedComponents: [],
+            placed: [],
             wires: [],
             running: false,
             r: 10000,
             c: 0.000001,
-            selectedComponent: null
+            switchClosed: false
         };
         
-        // ==================== THREE.JS SETUP ====================
-        let scene, camera, renderer;
-        let breadboard, placedObjects = [];
+        // ===== THREE.JS =====
+        let scene, camera, renderer, breadboard;
+        let placedObjs = [];
+        let wireObjs = [];
         let raycaster, mouse;
-        let isDragging = false;
-        let dragPlane;
-        
-        // Camera controls
-        letcamAngle = 0, camHeight = 8, camDistance = 12;
-        let isMouseDown = false, lastMouseX = 0, lastMouseY = 0;
-        
-        // Breadboard area bounds
-        const breadboardArea = {
-            x: { min: -1.5, max: 1.5 },
-            z: { min: -1, max: 1 }
-        };
+        let isMouseDown = false, lastX = 0, lastY = 0;
+        let camAngle = 0, camHeight = 8, camDist = 14;
         
         function init() {
-            // Scene
             scene = new THREE.Scene();
             scene.background = new THREE.Color(0x0a0a0f);
             scene.fog = new THREE.Fog(0x0a0a0f, 15, 40);
             
-            // Camera
             camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 0.1, 100);
             camera.position.set(0, 10, 14);
             camera.lookAt(0, 0, 0);
             
-            // Renderer
             renderer = new THREE.WebGLRenderer({ canvas: document.getElementById('canvas'), antialias: true });
             renderer.setSize(window.innerWidth, window.innerHeight);
             renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
             renderer.shadowMap.enabled = true;
-            renderer.shadowMap.type = THREE.PCFSoftShadowMap;
             
             // Lighting
-            const ambient = new THREE.AmbientLight(0x404060, 0.6);
-            scene.add(ambient);
+            scene.add(new THREE.AmbientLight(0x404060, 0.6));
             
             const mainLight = new THREE.DirectionalLight(0xffffff, 0.8);
             mainLight.position.set(5, 15, 10);
             mainLight.castShadow = true;
-            mainLight.shadow.mapSize.width = 2048;
-            mainLight.shadow.mapSize.height = 2048;
             scene.add(mainLight);
             
-            const accentLight1 = new THREE.PointLight(0x831C91, 0.4, 20);
-            accentLight1.position.set(-5, 5, -5);
-            scene.add(accentLight1);
+            const p1 = new THREE.PointLight(0x831C91, 0.4, 20);
+            p1.position.set(-5, 5, -5);
+            scene.add(p1);
             
-            const accentLight2 = new THREE.PointLight(0xFF70BF, 0.3, 15);
-            accentLight2.position.set(5, 3, 5);
-            scene.add(accentLight2);
+            const p2 = new THREE.PointLight(0xFF70BF, 0.3, 15);
+            p2.position.set(5, 3, 5);
+            scene.add(p2);
             
-            // Floor
-            const gridHelper = new THREE.GridHelper(30, 30, 0x2a2a35, 0x1a1a25);
-            scene.add(gridHelper);
-            
-            const floorGeo = new THREE.PlaneGeometry(30, 30);
-            const floorMat = new THREE.MeshStandardMaterial({ color: 0x0a0a0f, roughness: 0.9 });
-            const floor = new THREE.Mesh(floorGeo, floorMat);
+            // Grid
+            scene.add(new THREE.GridHelper(30, 30, 0x2a2a35, 0x1a1a25));
+            const floor = new THREE.Mesh(
+                new THREE.PlaneGeometry(30, 30),
+                new THREE.MeshStandardMaterial({ color: 0x0a0a0f, roughness: 0.9 })
+            );
             floor.rotation.x = -Math.PI / 2;
             floor.receiveShadow = true;
             scene.add(floor);
             
-            // Create lab table
+            // Table
             createTable();
-            
-            // Create breadboard
             createBreadboard();
+            createHoles();
             
-            // Create breadboard holes
-            createBreadboardHoles();
-            
-            // Raycaster
             raycaster = new THREE.Raycaster();
             mouse = new THREE.Vector2();
             
-            // Drag plane
-            dragPlane = new THREE.Plane(new THREE.Vector3(0, 1, 0), -1);
-            
-            // Event listeners
-            setupEventListeners();
-            
-            // Start animation
+            setupEvents();
             animate();
-            
-            // Start CRO animation
             animateCRO();
-            
-            // Update UI
             updateUI();
         }
         
         function createTable() {
-            // Main table surface
-            const tableGeo = new THREE.BoxGeometry(5, 0.15, 3.5);
-            const tableMat = new THREE.MeshStandardMaterial({ color: 0x1a1a25, roughness: 0.3, metalness: 0.7 });
-            const table = new THREE.Mesh(tableGeo, tableMat);
+            const table = new THREE.Mesh(
+                new THREE.BoxGeometry(5, 0.15, 3.5),
+                new THREE.MeshStandardMaterial({ color: 0x1a1a25, roughness: 0.3, metalness: 0.7 })
+            );
             table.position.y = 1;
             table.castShadow = true;
-            table.receiveShadow = true;
             scene.add(table);
             
-            // Table legs
-            const legGeo = new THREE.CylinderGeometry(0.06, 0.06, 1, 8);
-            const legMat = new THREE.MeshStandardMaterial({ color: 0x2a2a35, metalness: 0.8 });
-            
+            // Legs
             [[-2.2, 0.5, -1.5], [2.2, 0.5, -1.5], [-2.2, 0.5, 1.5], [2.2, 0.5, 1.5]].forEach(pos => {
-                const leg = new THREE.Mesh(legGeo, legMat);
+                const leg = new THREE.Mesh(
+                    new THREE.CylinderGeometry(0.06, 0.06, 1, 8),
+                    new THREE.MeshStandardMaterial({ color: 0x2a2a35, metalness: 0.8 })
+                );
                 leg.position.set(...pos);
-                leg.castShadow = true;
                 scene.add(leg);
             });
             
-            // Table label
-            const labelCanvas = document.createElement('canvas');
-            labelCanvas.width = 512;
-            labelCanvas.height = 128;
-            const ctx = labelCanvas.getContext('2d');
+            // Label
+            const canvas = document.createElement('canvas');
+            canvas.width = 512; canvas.height = 96;
+            const ctx = canvas.getContext('2d');
             ctx.fillStyle = '#831C91';
-            ctx.fillRect(0, 0, 512, 128);
+            ctx.fillRect(0, 0, 512, 96);
             ctx.fillStyle = '#FF70BF';
-            ctx.font = 'bold 48px monospace';
+            ctx.font = 'bold 36px monospace';
             ctx.textAlign = 'center';
-            ctx.fillText('ELECTRONICS LAB - BREADBOARD', 256, 80);
+            ctx.fillText('ELECTRONICS LAB - RC CIRCUITS', 256, 60);
             
-            const labelTex = new THREE.CanvasTexture(labelCanvas);
-            const labelGeo = new THREE.PlaneGeometry(4, 1);
-            const labelMat = new THREE.MeshBasicMaterial({ map: labelTex, transparent: true });
-            const label = new THREE.Mesh(labelGeo, labelMat);
-            label.position.set(0, 1.5, -1.6);
+            const label = new THREE.Mesh(
+                new THREE.PlaneGeometry(4, 0.75),
+                new THREE.MeshBasicMaterial({ map: new THREE.CanvasTexture(canvas), transparent: true })
+            );
+            label.position.set(0, 1.5, -1.55);
             label.rotation.x = -0.3;
             scene.add(label);
         }
         
         function createBreadboard() {
-            // Breadboard body
-            const boardGeo = new THREE.BoxGeometry(3, 0.12, 2);
-            const boardMat = new THREE.MeshStandardMaterial({ 
-                color: 0x1a1a25, 
-                roughness: 0.4, 
-                metalness: 0.5 
-            });
-            breadboard = new THREE.Mesh(boardGeo, boardMat);
+            breadboard = new THREE.Mesh(
+                new THREE.BoxGeometry(3, 0.12, 2),
+                new THREE.MeshStandardMaterial({ color: 0x1a1a25, roughness: 0.4, metalness: 0.5 })
+            );
             breadboard.position.set(0, 1.12, 0);
-            breadboard.castShadow = true;
             breadboard.name = 'breadboard';
             scene.add(breadboard);
             
             // Power rails
-            const railGeo = new THREE.BoxGeometry(3, 0.08, 0.15);
-            const railRedMat = new THREE.MeshStandardMaterial({ color: 0xcc2222 });
-            const railBlueMat = new THREE.MeshStandardMaterial({ color: 0x2222cc });
-            
-            const redRail = new THREE.Mesh(railGeo, railRedMat);
+            const redRail = new THREE.Mesh(
+                new THREE.BoxGeometry(3, 0.08, 0.12),
+                new THREE.MeshStandardMaterial({ color: 0xcc2222 })
+            );
             redRail.position.set(0, 1.18, -0.85);
             scene.add(redRail);
             
-            const blueRail = new THREE.Mesh(railGeo, railBlueMat);
+            const blueRail = new THREE.Mesh(
+                new THREE.BoxGeometry(3, 0.08, 0.12),
+                new THREE.MeshStandardMaterial({ color: 0x2222cc })
+            );
             blueRail.position.set(0, 1.18, 0.85);
             scene.add(blueRail);
-            
-            // Center split line
-            const lineGeo = new THREE.BoxGeometry(3, 0.005, 0.02);
-            const lineMat = new THREE.MeshStandardMaterial({ color: 0x333333 });
-            const splitLine = new THREE.Mesh(lineGeo, lineMat);
-            splitLine.position.set(0, 1.19, 0);
-            scene.add(splitLine);
         }
         
-        function createBreadboardHoles() {
-            const holeGeo = new THREE.CylinderGeometry(0.03, 0.03, 0.02, 8);
+        function createHoles() {
+            const holeGeo = new THREE.CylinderGeometry(0.025, 0.025, 0.02, 8);
             const holeMat = new THREE.MeshBasicMaterial({ color: 0x0a0a0a });
             
-            // Create hole grid on breadboard
             for (let row = -3; row <= 3; row++) {
                 for (let col = -5; col <= -1; col++) {
                     const hole = new THREE.Mesh(holeGeo, holeMat.clone());
-                    hole.position.set(col * 0.3, 1.19, row * 0.25);
-                    hole.userData.hole = { row, col };
-                    hole.userData.connected = false;
+                    hole.position.set(col * 0.28, 1.19, row * 0.24);
+                    hole.userData.pos = { r: row, c: col };
                     scene.add(hole);
                 }
                 for (let col = 1; col <= 5; col++) {
                     const hole = new THREE.Mesh(holeGeo, holeMat.clone());
-                    hole.position.set(col * 0.3, 1.19, row * 0.25);
-                    hole.userData.hole = { row, col };
-                    hole.userData.connected = false;
+                    hole.position.set(col * 0.28, 1.19, row * 0.24);
+                    hole.userData.pos = { r: row, c: col };
                     scene.add(hole);
                 }
             }
         }
         
-        // ==================== COMPONENT 3D MODELS ====================
-        function createComponent3D(type, value) {
-            const group = new THREE.Group();
-            group.userData.type = type;
-            group.userData.value = value;
+        // ===== COMPONENT 3D =====
+        function createComp3D(type, val) {
+            const g = new THREE.Group();
+            g.userData.type = type;
+            g.userData.value = val;
             
-            const colors = {
-                resistor: 0xd552a3,
-                capacitor: 0x462c7d,
-                led: 0xff3333,
-                battery: 0x22aa22,
-                wire: 0x888888
-            };
-            
-            const color = colors[type] || 0x831c91;
-            const mat = new THREE.MeshStandardMaterial({ color, roughness: 0.4, metalness: 0.6 });
+            const colors = { resistor: 0xd552a3, capacitor: 0x462c7d, led: 0xff3333, battery: 0x22aa22, switch: 0x666666, wire: 0x888888 };
+            const mat = new THREE.MeshStandardMaterial({ color: colors[type] || 0x831c91, roughness: 0.4, metalness: 0.6 });
             
             switch(type) {
-                case 'resistor': {
-                    // Main body
-                    const bodyGeo = new THREE.CylinderGeometry(0.06, 0.06, 0.3, 12);
-                    const body = new THREE.Mesh(bodyGeo, mat);
+                case 'resistor':
+                    const body = new THREE.Mesh(new THREE.CylinderGeometry(0.05, 0.05, 0.25, 12), mat);
                     body.rotation.z = Math.PI / 2;
-                    group.add(body);
-                    
-                    // Color bands
-                    const bandColors = [0x8B4513, 0xFF8C00, 0xFFD700, 0x00FF00];
-                    bandColors.forEach((c, i) => {
-                        const bandGeo = new THREE.CylinderGeometry(0.062, 0.062, 0.03, 12);
-                        const bandMat = new THREE.MeshStandardMaterial({ color: c });
-                        const band = new THREE.Mesh(bandGeo, bandMat);
+                    g.add(body);
+                    // Bands
+                    [0x8B4513, 0xFF8C00, 0xFFD700].forEach((c, i) => {
+                        const band = new THREE.Mesh(
+                            new THREE.CylinderGeometry(0.052, 0.052, 0.025, 12),
+                            new THREE.MeshStandardMaterial({ color: c })
+                        );
                         band.rotation.z = Math.PI / 2;
-                        band.position.x = -0.1 + i * 0.06;
-                        group.add(band);
+                        band.position.x = -0.08 + i * 0.05;
+                        g.add(band);
                     });
                     break;
-                }
-                
-                case 'capacitor': {
-                    // Body
-                    const bodyGeo = new THREE.CylinderGeometry(0.08, 0.08, 0.2, 16);
-                    const body = new THREE.Mesh(bodyGeo, mat);
-                    group.add(body);
                     
-                    // Top mark
-                    const topGeo = new THREE.CylinderGeometry(0.05, 0.02, 0.05, 16);
-                    const topMat = new THREE.MeshStandardMaterial({ color: 0x666666 });
-                    const top = new THREE.Mesh(topGeo, topMat);
-                    top.position.y = 0.1;
-                    group.add(top);
+                case 'capacitor':
+                    g.add(new THREE.Mesh(new THREE.CylinderGeometry(0.07, 0.07, 0.18, 16), mat));
+                    g.add(new THREE.Mesh(
+                        new THREE.CylinderGeometry(0.04, 0.02, 0.04, 16),
+                        new THREE.MeshStandardMaterial({ color: 0x666666 })
+                    ));
                     break;
-                }
-                
-                case 'led': {
-                    // Dome
-                    const domeGeo = new THREE.SphereGeometry(0.08, 16, 16, 0, Math.PI * 2, 0, Math.PI / 2);
-                    const domeMat = new THREE.MeshStandardMaterial({ 
-                        color: 0xff0000, 
-                        emissive: 0xff0000,
-                        emissiveIntensity: 0.3,
-                        transparent: true,
-                        opacity: 0.8
-                    });
-                    const dome = new THREE.Mesh(domeGeo, domeMat);
-                    group.add(dome);
                     
-                    // Base
-                    const baseGeo = new THREE.CylinderGeometry(0.04, 0.04, 0.05, 12);
-                    const baseMat = new THREE.MeshStandardMaterial({ color: 0x333333 });
-                    const base = new THREE.Mesh(baseGeo, baseMat);
-                    base.position.y = -0.05;
-                    group.add(base);
+                case 'led':
+                    g.add(new THREE.Mesh(
+                        new THREE.SphereGeometry(0.07, 16, 16, 0, Math.PI * 2, 0, Math.PI / 2),
+                        new THREE.MeshStandardMaterial({ color: 0xff0000, emissive: 0xff0000, emissiveIntensity: 0.3, transparent: true, opacity: 0.8 })
+                    ));
+                    g.add(new THREE.Mesh(
+                        new THREE.CylinderGeometry(0.035, 0.035, 0.04, 12),
+                        new THREE.MeshStandardMaterial({ color: 0x333333 })
+                    ));
                     break;
-                }
-                
-                case 'battery': {
-                    // Body
-                    const bodyGeo = new THREE.BoxGeometry(0.25, 0.4, 0.15);
-                    const body = new THREE.Mesh(bodyGeo, mat);
-                    group.add(body);
                     
-                    // Positive terminal
-                    const posGeo = new THREE.CylinderGeometry(0.02, 0.02, 0.05, 8);
-                    const posMat = new THREE.MeshStandardMaterial({ color: 0xcc2222 });
-                    const pos = new THREE.Mesh(posGeo, posMat);
-                    pos.position.y = 0.22;
-                    group.add(pos);
+                case 'battery':
+                    g.add(new THREE.Mesh(new THREE.BoxGeometry(0.22, 0.35, 0.14), mat));
+                    g.add(new THREE.Mesh(
+                        new THREE.CylinderGeometry(0.018, 0.018, 0.04, 8),
+                        new THREE.MeshStandardMaterial({ color: 0xcc2222 })
+                    ));
                     break;
-                }
-                
-                case 'wire': {
-                    // Simple wire segment
-                    const wireGeo = new THREE.CylinderGeometry(0.015, 0.015, 0.4, 8);
-                    const wire = new THREE.Mesh(wireGeo, mat);
-                    wire.rotation.z = Math.PI / 2;
-                    group.add(wire);
+                    
+                case 'switch':
+                    const base = new THREE.Mesh(new THREE.BoxGeometry(0.15, 0.06, 0.1), mat);
+                    g.add(base);
+                    const arm = new THREE.Mesh(new THREE.BoxGeometry(0.12, 0.03, 0.02), new THREE.MeshStandardMaterial({ color: 0x888888 }));
+                    arm.position.y = 0.04;
+                    arm.name = 'switchArm';
+                    g.add(arm);
                     break;
-                }
+                    
+                case 'wire':
+                    const w = new THREE.Mesh(new THREE.CylinderGeometry(0.012, 0.012, 0.35, 8), mat);
+                    w.rotation.z = Math.PI / 2;
+                    g.add(w);
+                    break;
             }
             
-            group.traverse(child => {
-                if (child.isMesh) {
-                    child.castShadow = true;
-                    child.receiveShadow = true;
-                }
-            });
-            
-            return group;
+            g.traverse(c => { if (c.isMesh) { c.castShadow = true; c.receiveShadow = true; } });
+            return g;
         }
         
-        // ==================== PLACEMENT LOGIC ====================
-        function canPlaceAt(x, z) {
+        function canPlace(x, z) {
             return x >= -1.4 && x <= 1.4 && z >= -0.9 && z <= 0.9;
         }
         
-        function placeComponent(type, value, x, z) {
-            if (!canPlaceAt(x, z)) {
-                showToast('⚠️ Place on breadboard area only');
-                return false;
+        function placeComp(type, val, x, z) {
+            if (!canPlace(x, z)) { showToast('⚠️ Place on breadboard'); return false; }
+            
+            for (const c of placedObjs) {
+                const d = Math.sqrt((c.position.x - x) ** 2 + (c.position.z - z) ** 2);
+                if (d < 0.28) { showToast('⚠️ Too close'); return false; }
             }
             
-            // Check if position occupied
-            for (const comp of placedObjects) {
-                const dist = Math.sqrt(Math.pow(comp.position.x - x, 2) + Math.pow(comp.position.z - z, 2));
-                if (dist < 0.3) {
-                    showToast('⚠️ Position occupied');
-                    return false;
-                }
+            const comp = createComp3D(type, val);
+            comp.position.set(x, 1.25, z);
+            scene.add(comp);
+            placedObjs.push(comp);
+            state.placed.push({ type, val, x, z });
+            
+            // Auto-wire if battery + component
+            if (type === 'battery') {
+                addAutoWire('battery', 'vcc');
             }
-            
-            // Create and place 3D component
-            const comp3D = createComponent3D(type, value);
-            comp3D.position.set(x, 1.25, z);
-            scene.add(comp3D);
-            placedObjects.push(comp3D);
-            
-            // Add to state
-            state.placedComponents.push({ type, value, x, z });
             
             updateUI();
-            showToast(`✅ Added ${type} (${value})`);
-            
+            showToast(`✅ ${type} placed`);
             return true;
         }
         
-        function removeComponent(index) {
-            const comp = placedObjects[index];
-            scene.remove(comp);
-            placedObjects.splice(index, 1);
-            state.placedComponents.splice(index, 1);
+        function addAutoWire(from, to) {
+            // Simple visual wire
+            const wireMat = new THREE.MeshBasicMaterial({ color: 0x00ff88 });
+            const wire = new THREE.Mesh(new THREE.CylinderGeometry(0.015, 0.015, 0.5, 8), wireMat);
+            wire.rotation.z = Math.PI / 2;
+            wire.position.set(0, 1.22, 0.7);
+            scene.add(wire);
+            wireObjs.push(wire);
+            state.wires.push({ from, to });
+            updateWireCount();
+        }
+        
+        function removeComp(idx) {
+            scene.remove(placedObjs[idx]);
+            placedObjs.splice(idx, 1);
+            state.placed.splice(idx, 1);
             updateUI();
         }
         
-        // ==================== CIRCUIT SIMULATION ====================
-        function canRunSimulation() {
-            const types = state.placedComponents.map(c => c.type);
+        // ===== SIMULATION =====
+        function canRun() {
+            const types = state.placed.map(c => c.type);
             
-            if (state.circuitType === 'rc-low' || state.circuitType === 'rc-high') {
-                return types.includes('resistor') && types.includes('capacitor');
-            } else if (state.circuitType === 'charge' || state.circuitType === 'discharge') {
-                return types.includes('resistor') && types.includes('capacitor') && types.includes('battery');
+            if (state.circuitType === 'led-blink') {
+                return types.includes('led') && types.includes('resistor') && types.includes('battery');
             }
-            return false;
+            
+            return types.includes('resistor') && types.includes('capacitor');
         }
         
-        function calculateCircuit() {
-            // Get values from placed components or sliders
-            const rComponent = state.placedComponents.find(c => c.type === 'resistor');
-            const cComponent = state.placedComponents.find(c => c.type === 'capacitor');
+        function calc() {
+            const rc = state.placed.find(c => c.type === 'resistor');
+            const cc = state.placed.find(c => c.type === 'capacitor');
             
-            const R = rComponent ? rComponent.value : state.r;
-            const C = cComponent ? cComponent.value : state.c;
-            
+            const R = rc ? rc.val : state.r;
+            const C = cc ? cc.val : state.c;
             const tau = R * C;
             const fc = 1 / (2 * Math.PI * R * C);
-            const vAtTau = 9 * (1 - Math.exp(-1)); // At tau, reaches 63.2%
+            const vTau = 9 * (1 - Math.exp(-1));
             
-            return { R, C, tau, fc, vAtTau };
+            return { R, C, tau, fc, vTau };
         }
         
-        function runSimulation() {
-            if (!canRunSimulation()) return;
+        function runSim() {
+            if (!canRun()) return;
             
             state.running = true;
             document.getElementById('run-btn').textContent = '⏹ Stop';
-            document.getElementById('run-btn').style.background = 'linear-gradient(135deg, #cc2222, #aa0000)';
             
             document.getElementById('power-dot').classList.add('active');
-            document.getElementById('circuit-dot').classList.add('active');
             document.getElementById('sim-dot').classList.add('active');
             document.getElementById('sim-status').textContent = 'Running';
             
-            // Make LED blink if present
-            const led = placedObjects.find(c => c.userData.type === 'led');
-            if (led) {
-                const ledMesh = led.children[0];
-                if (ledMesh.material) {
-                    ledMesh.material.emissiveIntensity = 1;
-                }
+            // LED on
+            const led = placedObjs.find(c => c.userData.type === 'led');
+            if (led && led.children[0]) {
+                led.children[0].material.emissiveIntensity = 1;
             }
+            
+            // Update meters
+            const result = calc();
+            const I = result.R > 0 ? 9 / result.R : 0;
+            const P = 9 * I;
+            
+            document.getElementById('voltage-val').textContent = '9.00 V';
+            document.getElementById('current-val').textContent = (I * 1000).toFixed(2) + ' mA';
+            document.getElementById('power-val').textContent = (P * 1000).toFixed(2) + ' mW';
         }
         
-        function stopSimulation() {
+        function stopSim() {
             state.running = false;
             document.getElementById('run-btn').textContent = '▶ Run Simulation';
-            document.getElementById('run-btn').style.background = '';
             
             document.getElementById('power-dot').classList.remove('active');
-            document.getElementById('circuit-dot').classList.remove('active');
             document.getElementById('sim-dot').classList.remove('active');
             document.getElementById('sim-status').textContent = 'Idle';
             
-            // Turn off LED
-            const led = placedObjects.find(c => c.userData.type === 'led');
-            if (led) {
-                const ledMesh = led.children[0];
-                if (ledMesh.material) {
-                    ledMesh.material.emissiveIntensity = 0.3;
-                }
+            // LED off
+            const led = placedObjs.find(c => c.userData.type === 'led');
+            if (led && led.children[0]) {
+                led.children[0].material.emissiveIntensity = 0.3;
             }
+            
+            document.getElementById('voltage-val').textContent = '0.00 V';
+            document.getElementById('current-val').textContent = '0.00 mA';
+            document.getElementById('power-val').textContent = '0.00 mW';
         }
         
-        // ==================== CRO ANIMATION ====================
-        let croTime = 0;
+        // ===== CRO ANIMATION =====
+        let croT = 0;
         
         function animateCRO() {
-            const canvas = document.getElementById('cro-canvas');
-            const ctx = canvas.getContext('2d');
+            const cvs = document.getElementById('cro-canvas');
+            const ctx = cvs.getContext('2d');
             
-            if (!canvas.width) {
-                canvas.width = canvas.offsetWidth;
-                canvas.height = canvas.offsetHeight;
-            }
+            if (!cvs.width) { cvs.width = cvs.offsetWidth; cvs.height = cvs.offsetHeight; }
             
-            const w = canvas.width;
-            const h = canvas.height;
-            croTime += 0.016;
+            const w = cvs.width, h = cvs.height;
+            croT += 0.016;
             
-            // Background
             ctx.fillStyle = '#000';
             ctx.fillRect(0, 0, w, h);
             
             // Grid
             ctx.strokeStyle = '#1a1a1a';
-            ctx.lineWidth = 1;
-            
-            // Vertical lines
             for (let i = 0; i <= 10; i++) {
-                ctx.beginPath();
-                ctx.moveTo(i * w / 10, 0);
-                ctx.lineTo(i * w / 10, h);
-                ctx.stroke();
+                ctx.beginPath(); ctx.moveTo(i * w / 10, 0); ctx.lineTo(i * w / 10, h); ctx.stroke();
             }
-            
-            // Horizontal lines
             for (let i = 0; i <= 8; i++) {
-                ctx.beginPath();
-                ctx.moveTo(0, i * h / 8);
-                ctx.lineTo(w, i * h / 8);
-                ctx.stroke();
+                ctx.beginPath(); ctx.moveTo(0, i * h / 8); ctx.lineTo(w, i * h / 8); ctx.stroke();
             }
             
-            // Center axes (brighter)
+            // Axes
             ctx.strokeStyle = '#222';
-            ctx.beginPath();
-            ctx.moveTo(w / 2, 0);
-            ctx.lineTo(w / 2, h);
-            ctx.moveTo(0, h / 2);
-            ctx.lineTo(w, h / 2);
-            ctx.stroke();
+            ctx.beginPath(); ctx.moveTo(w/2, 0); ctx.lineTo(w/2, h); ctx.stroke();
+            ctx.beginPath(); ctx.moveTo(0, h/2); ctx.lineTo(w, h/2); ctx.stroke();
             
-            // Waveform - only if running
-            if (state.running && canRunSimulation()) {
-                const calc = calculateCircuit();
+            if (state.running && canRun()) {
+                const r = calc();
                 
-                let waveColor, waveFreq, waveAmp;
-                
-                if (state.circuitType === 'rc-low') {
-                    waveColor = '#00ff00';
-                    waveFreq = 0.5; // Low frequency - passes through
-                    waveAmp = h * 0.35;
-                } else if (state.circuitType === 'rc-high') {
-                    waveColor = '#00ff88';
-                    waveFreq = 3; // Higher frequency
-                    waveAmp = h * 0.3;
-                } else if (state.circuitType === 'charge') {
-                    // Rising edge
+                if (state.circuitType === 'charge') {
                     ctx.strokeStyle = '#ffff00';
                     ctx.lineWidth = 2;
                     ctx.beginPath();
-                    
                     for (let x = 0; x < w; x++) {
-                        const t = (x / w) * calc.tau * 10;
-                        const v = 9 * (1 - Math.exp(-t / calc.tau));
+                        const t = (x / w) * r.tau * 8;
+                        const v = 9 * (1 - Math.exp(-t / r.tau));
                         const y = h - (v / 9) * (h * 0.8) - 20;
                         x === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y);
                     }
                     ctx.stroke();
                     
-                    // Reference voltage line
-                    ctx.strokeStyle = '#333';
-                    ctx.setLineDash([5, 5]);
-                    ctx.beginPath();
-                    ctx.moveTo(0, 20);
-                    ctx.lineTo(w, 20);
-                    ctx.stroke();
-                    ctx.setLineDash([]);
-                    
-                    // Time constant markers
                     ctx.fillStyle = '#ffff00';
                     ctx.font = '10px monospace';
-                    ctx.fillText(`τ = ${(calc.tau * 1000).toFixed(1)}ms`, 10, 15);
-                    ctx.fillText(`V = 63.2% × 9V = 5.7V`, w - 90, 15);
-                } else if (state.circuitType === 'discharge') {
-                    // Falling edge
+                    ctx.fillText(`τ = ${(r.tau * 1000).toFixed(1)}ms`, 10, 15);
+                    ctx.fillText(`V = 63.2% at τ`, w - 80, 15);
+                }
+                else if (state.circuitType === 'discharge') {
                     ctx.strokeStyle = '#ff6600';
                     ctx.lineWidth = 2;
                     ctx.beginPath();
-                    
                     for (let x = 0; x < w; x++) {
-                        const t = (x / w) * calc.tau * 10;
-                        const v = 9 * Math.exp(-t / calc.tau);
+                        const t = (x / w) * r.tau * 8;
+                        const v = 9 * Math.exp(-t / r.tau);
                         const y = h - (v / 9) * (h * 0.8) - 20;
                         x === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y);
                     }
@@ -1199,189 +1006,144 @@
                     
                     ctx.fillStyle = '#ff6600';
                     ctx.font = '10px monospace';
-                    ctx.fillText(`τ = ${(calc.tau * 1000).toFixed(1)}ms`, 10, 15);
-                    ctx.fillText(`V = 36.8% × 9V = 3.3V`, w - 100, 15);
+                    ctx.fillText(`τ = ${(r.tau * 1000).toFixed(1)}ms`, 10, 15);
                 }
-                
-                // For filter circuits - show sine wave
-                if (state.circuitType === 'rc-low' || state.circuitType === 'rc-high') {
-                    ctx.strokeStyle = waveColor;
+                else if (state.circuitType === 'led-blink') {
+                    const blink = Math.sin(croT * 10) > 0 ? 1 : 0;
+                    ctx.fillStyle = blink ? '#ff0000' : '#330000';
+                    ctx.fillRect(0, h/2 - 20, w, 40);
+                    ctx.fillStyle = '#ff0000';
+                    ctx.font = '10px monospace';
+                    ctx.fillText('LED BLINKING', w/2 - 40, h/2 + 5);
+                }
+                else {
+                    // Filter response
+                    const color = state.circuitType === 'rc-low' ? '#00ff00' : '#00ff88';
+                    ctx.strokeStyle = color;
                     ctx.lineWidth = 2;
                     ctx.beginPath();
                     
-                    const numCycles = state.circuitType === 'rc-low' ? 3 : 2;
-                    const phase = croTime * 3;
-                    
+                    const cycles = state.circuitType === 'rc-low' ? 3 : 2;
                     for (let x = 0; x < w; x++) {
-                        const y = h / 2 + Math.sin((x / w) * numCycles * Math.PI * 2 + phase) * waveAmp;
+                        const y = h/2 + Math.sin((x / w) * cycles * Math.PI * 2 + croT * 3) * h * 0.35;
                         x === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y);
                     }
                     ctx.stroke();
                     
-                    // Frequency label
-                    ctx.fillStyle = waveColor;
-                    ctx.font = '11px monospace';
-                    ctx.fillText(`fc = ${calc.fc.toFixed(1)} Hz`, 10, 20);
-                    ctx.fillText(`τ = ${(calc.tau * 1000).toFixed(1)} ms`, 10, 35);
+                    ctx.fillStyle = color;
+                    ctx.font = '10px monospace';
+                    ctx.fillText(`fc = ${r.fc.toFixed(1)} Hz`, 10, 18);
+                    ctx.fillText(`τ = ${(r.tau * 1000).toFixed(1)}ms`, 10, 32);
                 }
-            } else {
-                // No signal
+            }
+            else {
                 ctx.fillStyle = '#333';
-                ctx.font = '14px monospace';
+                ctx.font = '12px monospace';
                 ctx.textAlign = 'center';
-                ctx.fillText('NO SIGNAL', w / 2, h / 2);
+                ctx.fillText('NO SIGNAL', w/2, h/2);
                 ctx.textAlign = 'left';
             }
             
             requestAnimationFrame(animateCRO);
         }
         
-        // ==================== EVENT LISTENERS ====================
-        function setupEventListeners() {
+        // ===== EVENTS =====
+        function setupEvents() {
             // Drag from tray
             document.querySelectorAll('.tray-component').forEach(el => {
-                el.addEventListener('dragstart', (e) => {
-                    e.dataTransfer.setData('component', el.dataset.component);
-                    e.dataTransfer.setData('value', el.dataset.value);
-                    el.classList.add('dragging');
-                });
-                
-                el.addEventListener('dragend', () => {
-                    el.classList.remove('dragging');
+                el.addEventListener('dragstart', e => {
+                    e.dataTransfer.setData('comp', el.dataset.component);
+                    e.dataTransfer.setData('val', el.dataset.value);
                 });
             });
             
-            // Drag on canvas
             const canvas = document.getElementById('canvas');
             
-            canvas.addEventListener('dragover', (e) => {
-                e.preventDefault();
-            });
+            canvas.addEventListener('dragover', e => { e.preventDefault(); });
             
-            canvas.addEventListener('drop', (e) => {
+            canvas.addEventListener('drop', e => {
                 e.preventDefault();
+                const type = e.dataTransfer.getData('comp');
+                const val = parseFloat(e.dataTransfer.getData('val'));
                 
-                const type = e.dataTransfer.getData('component');
-                const value = parseFloat(e.dataTransfer.getData('value'));
-                
-                // Convert screen to world coords
                 const rect = canvas.getBoundingClientRect();
-                const x = ((e.clientX - rect.left) / rect.width) * 2 - 1;
-                const y = -((e.clientY - rect.top) / rect.height) * 2 + 1;
+                raycaster.setFromCamera({
+                    x: ((e.clientX - rect.left) / rect.width) * 2 - 1,
+                    y: -((e.clientY - rect.top) / rect.height) * 2 + 1
+                }, camera);
                 
-                raycaster.setFromCamera({ x, y }, camera);
-                const intersects = raycaster.intersectObjects([breadboard]);
-                
-                if (intersects.length > 0) {
-                    const point = intersects[0].point;
-                    placeComponent(type, value, point.x, point.z);
+                const hit = raycaster.intersectObjects([breadboard]);
+                if (hit.length > 0) {
+                    placeComp(type, val, hit[0].point.x, hit[0].point.z);
                 }
             });
             
-            // Canvas mouse controls
-            canvas.addEventListener('mousedown', (e) => {
+            // Mouse controls
+            canvas.addEventListener('mousedown', e => {
                 isMouseDown = true;
-                lastMouseX = e.clientX;
-                lastMouseY = e.clientY;
+                lastX = e.clientX; lastY = e.clientY;
             });
             
-            canvas.addEventListener('mousemove', (e) => {
+            canvas.addEventListener('mousemove', e => {
                 if (!isMouseDown) return;
-                
-                const dx = e.clientX - lastMouseX;
-                const dy = e.clientY - lastMouseY;
-                
+                const dx = e.clientX - lastX;
+                const dy = e.clientY - lastY;
                 camAngle += dx * 0.005;
                 camHeight = Math.max(3, Math.min(20, camHeight - dy * 0.03));
-                
-                lastMouseX = e.clientX;
-                lastMouseY = e.clientY;
-                
-                updateCamera();
+                lastX = e.clientX; lastY = e.clientY;
+                updateCam();
             });
             
-            canvas.addEventListener('mouseup', () => {
-                isMouseDown = false;
-            });
+            canvas.addEventListener('mouseup', () => { isMouseDown = false; });
             
-            canvas.addEventListener('wheel', (e) => {
-                camDistance = Math.max(5, Math.min(25, camDistance + e.deltaY * 0.01));
-                updateCamera();
-            });
-            
-            canvas.addEventListener('click', (e) => {
-                // Handle click in place mode to select component
-                const rect = canvas.getBoundingClientRect();
-                const x = ((e.clientX - rect.left) / rect.width) * 2 - 1;
-                const y = -((e.clientY - rect.top) / rect.height) * 2 + 1;
-                
-                raycaster.setFromCamera({ x, y }, camera);
-                const intersects = raycaster.intersectObjects(placedObjects);
-                
-                if (intersects.length > 0 && state.mode === 'place') {
-                    state.selectedComponent = intersects[0].object;
-                    showToast(`Selected: ${intersects[0].object.userData.type}`);
-                }
+            canvas.addEventListener('wheel', e => {
+                camDist = Math.max(5, Math.min(25, camDist + e.deltaY * 0.01));
+                updateCam();
             });
             
             // Mode buttons
-            document.querySelectorAll('.mode-btn').forEach(btn => {
-                btn.addEventListener('click', () => {
-                    document.querySelectorAll('.mode-btn').forEach(b => b.classList.remove('active'));
-                    btn.classList.add('active');
-                    state.mode = btn.dataset.mode;
+            document.querySelectorAll('.mode-btn').forEach(b => {
+                b.addEventListener('click', () => {
+                    document.querySelectorAll('.mode-btn').forEach(x => x.classList.remove('active'));
+                    b.classList.add('active');
+                    state.mode = b.dataset.mode;
                     
                     if (state.mode === 'run') {
-                        if (state.running) {
-                            stopSimulation();
-                        } else {
-                            runSimulation();
-                        }
-                    } else if (state.mode === 'view') {
-                        // Reset view
-                        camAngle = 0;
-                        camHeight = 8;
-                        camDistance = 12;
-                        updateCamera();
+                        if (state.running) stopSim(); else runSim();
                     }
+                    else if (state.mode === 'worksheet') toggleWorksheet();
+                    else if (state.mode === 'reset') resetAll();
                 });
             });
             
-            // Circuit type buttons
-            document.querySelectorAll('.circuit-btn').forEach(btn => {
-                btn.addEventListener('click', () => {
-                    document.querySelectorAll('.circuit-btn').forEach(b => b.classList.remove('active'));
-                    btn.classList.add('active');
-                    state.circuitType = btn.dataset.circuit;
+            // Circuit buttons
+            document.querySelectorAll('.circuit-btn').forEach(b => {
+                b.addEventListener('click', () => {
+                    document.querySelectorAll('.circuit-btn').forEach(x => x.classList.remove('active'));
+                    b.classList.add('active');
+                    state.circuitType = b.dataset.circuit;
                     updateUI();
                 });
             });
             
             // Sliders
-            document.getElementById('r-slider').addEventListener('input', (e) => {
+            document.getElementById('r-slider').addEventListener('input', e => {
                 state.r = parseInt(e.target.value) * 1000;
-                document.getElementById('r-display').textContent = `${e.target.value}KΩ`;
+                document.getElementById('r-display').textContent = e.target.value + 'KΩ';
                 updateUI();
             });
             
-            document.getElementById('c-slider').addEventListener('input', (e) => {
+            document.getElementById('c-slider').addEventListener('input', e => {
                 state.c = parseInt(e.target.value) * 0.000001;
-                document.getElementById('c-display').textContent = `${e.target.value}µF`;
+                document.getElementById('c-display').textContent = e.target.value + 'µF';
                 updateUI();
             });
             
             // Run button
             document.getElementById('run-btn').addEventListener('click', () => {
-                if (state.running) {
-                    stopSimulation();
-                } else {
-                    if (canRunSimulation()) {
-                        runSimulation();
-                    }
-                }
+                if (state.running) stopSim(); else runSim();
             });
             
-            // Window resize
             window.addEventListener('resize', () => {
                 camera.aspect = window.innerWidth / window.innerHeight;
                 camera.updateProjectionMatrix();
@@ -1389,80 +1151,85 @@
             });
         }
         
-        function updateCamera() {
-            camera.position.x = Math.sin(camAngle) * camDistance;
-            camera.position.z = Math.cos(camAngle) * camDistance;
+        function updateCam() {
+            camera.position.x = Math.sin(camAngle) * camDist;
+            camera.position.z = Math.cos(camAngle) * camDist;
             camera.position.y = camHeight;
             camera.lookAt(0, 1, 0);
         }
         
-        // ==================== UI UPDATES ====================
+        // ===== UI =====
         function updateUI() {
-            const calc = calculateCircuit();
+            const r = calc();
+            document.getElementById('tau-result').textContent = (r.tau * 1000).toFixed(2) + ' ms';
+            document.getElementById('fc-result').textContent = r.fc.toFixed(1) + ' Hz';
+            document.getElementById('v-result').textContent = r.vTau.toFixed(2) + ' V';
             
-            // Results
-            document.getElementById('tau-result').textContent = `${(calc.tau * 1000).toFixed(2)} ms`;
-            document.getElementById('fc-result').textContent = `${calc.fc.toFixed(1)} Hz`;
-            document.getElementById('v-result').textContent = `${calc.vAtTau.toFixed(2)} V`;
+            document.getElementById('run-btn').disabled = !canRun();
             
-            // Missing warning
-            const canRun = canRunSimulation();
-            document.getElementById('missing-warning').style.display = canRun ? 'none' : 'block';
-            document.getElementById('run-btn').disabled = !canRun;
-            
-            // Placed components list
-            const listEl = document.getElementById('placed-components');
-            listEl.innerHTML = '';
-            
-            state.placedComponents.forEach((comp, i) => {
-                let displayValue = comp.value;
-                if (comp.type === 'resistor') displayValue = `${comp.value / 1000}KΩ`;
-                else if (comp.type === 'capacitor') displayValue = `${comp.value * 1000000}µF`;
-                else if (comp.type === 'battery') displayValue = `${comp.value}V`;
+            const list = document.getElementById('placed-list');
+            list.innerHTML = '';
+            state.placed.forEach((c, i) => {
+                let v = c.val;
+                if (c.type === 'resistor') v = (c.val / 1000) + 'K';
+                else if (c.type === 'capacitor') v = (c.val * 1000000) + 'µ';
+                else if (c.type === 'battery') v = c.val + 'V';
                 
-                listEl.innerHTML += `
-                    <div class="placed-item">
-                        <div class="info">
-                            <span>${getComponentIcon(comp.type)}</span>
-                            <span>${comp.type} ${displayValue}</span>
-                        </div>
-                        <button class="remove-btn" onclick="removeComponent(${i})">×</button>
-                    </div>
-                `;
+                list.innerHTML += \`<div class="placed-item"><div class="info"><span>\${getIcon(c.type)}</span><span>\${c.type} \${v}</span></div><button class="remove-btn" onclick="removeComp(\${i})">×</button></div>\`;
             });
             
-            // Status
-            document.getElementById('circuit-status').textContent = 
-                state.placedComponents.length > 0 ? `${state.placedComponents.length} components` : 'No Circuit';
+            document.getElementById('wire-status').textContent = state.wires.length + ' wires';
         }
         
-        function getComponentIcon(type) {
-            const icons = {
-                resistor: '⚡',
-                capacitor: '🔋',
-                led: '💡',
-                battery: '🔌',
-                wire: '〰️'
-            };
-            return icons[type] || '📦';
+        function getIcon(t) {
+            return { resistor: '⚡', capacitor: '🔋', led: '🔴', battery: '🔌', switch: '⬛', wire: '〰️' }[t] || '📦';
         }
         
         function showToast(msg) {
-            const toast = document.getElementById('toast');
-            toast.textContent = msg;
-            toast.classList.add('show');
-            setTimeout(() => toast.classList.remove('show'), 2000);
+            const t = document.getElementById('toast');
+            t.textContent = msg;
+            t.classList.add('show');
+            setTimeout(() => t.classList.remove('show'), 2000);
         }
         
-        // ==================== ANIMATION LOOP ====================
+        function updateWireCount() {
+            document.getElementById('wire-status').textContent = state.wires.length + ' wires';
+            document.getElementById('wire-dot').classList.add('active');
+        }
+        
+        function toggleWorksheet() {
+            document.getElementById('worksheet-panel').classList.toggle('show');
+        }
+        
+        function checkAnswers() {
+            const inputs = document.querySelectorAll('#worksheet-panel input');
+            let correct = 0;
+            inputs.forEach(inp => {
+                const ans = inp.value.toLowerCase().trim();
+                const expected = inp.dataset.answer.toLowerCase();
+                if (ans === expected || ans.includes(expected)) correct++;
+            });
+            alert(\`You got \${correct}/\${inputs.length} correct!\`);
+        }
+        
+        function resetAll() {
+            placedObjs.forEach(c => scene.remove(c));
+            wireObjs.forEach(c => scene.remove(c));
+            placedObjs = [];
+            wireObjs = [];
+            state.placed = [];
+            state.wires = [];
+            if (state.running) stopSim();
+            updateUI();
+            showToast('🔄 Reset complete');
+        }
+        
         function animate() {
             requestAnimationFrame(animate);
             renderer.render(scene, camera);
         }
         
-        // Init
         init();
-        updateUI();
     </script>
 </body>
 </html>
