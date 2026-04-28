@@ -407,6 +407,28 @@
             <div class="ic">🪬</div>
             <div class="nm">Relay</div>
         </div>
+        
+        <div class="lbl">Digital</div>
+        <div class="tray-item" draggable="true" data-t="jkflip" data-v="1">
+            <div class="ic">🟦</div>
+            <div class="nm">JK FF</div>
+        </div>
+        <div class="tray-item" draggable="true" data-t="dflip" data-v="1">
+            <div class="ic">🟩</div>
+            <div class="nm">D FF</div>
+        </div>
+        <div class="tray-item" draggable="true" data-t="counter" data-v="1">
+            <div class="ic">🔢</div>
+            <div class="nm">Counter</div>
+        </div>
+        <div class="tray-item" draggable="true" data-t="xor" data-v="1">
+            <div class="ic">⊕</div>
+            <div class="nm">XOR</div>
+        </div>
+        <div class="tray-item" draggable="true" data-t="nand" data-v="1">
+            <div class="ic">⊼</div>
+            <div class="nm">NAND</div>
+        </div>
     </div>
     
     <div class="right-panel">
@@ -448,6 +470,18 @@
         <div class="ckt-grid" style="margin-bottom: 10px;">
             <button class="ckt-btn" data-c="ce">NPN CE</button>
             <button class="ckt-btn" data-c="emitter">Emitter</button>
+        </div>
+        
+        <!-- Digital -->
+        <div class="ckt-grid" style="margin-bottom: 10px;">
+            <button class="ckt-btn" data-c="jk-toggle">JK Toggle</button>
+            <button class="ckt-btn" data-c="jk-clock">JK Clock</button>
+            <button class="ckt-btn" data-c="d-latch">D Latch</button>
+            <button class="ckt-btn" data-c="counter4">Count-4</button>
+            <button class="ckt-btn" data-c="sr-latch">SR Latch</button>
+            <button class="ckt-btn" data-c="xor-gate">XOR</button>
+            <button class="ckt-btn" data-c="pwm">PWM</button>
+            <button class="ckt-btn" data-c="pcm">PCM</button>
         </div>
         
         <div class="sec-title">Values</div>
@@ -696,6 +730,28 @@
                     g.add(coil);
                     break;
                     
+                case 'jkflip':
+                case 'dflip':
+                    const icpkg = new THREE.Mesh(new THREE.BoxGeometry(0.3, 0.08, 0.2), m);
+                    g.add(icpkg);
+                    for (let i = 0; i < 4; i++) {
+                        const pin = new THREE.Mesh(new THREE.CylinderGeometry(0.01, 0.01, 0.04, 8), new THREE.MeshStandardMaterial({ color: 0xcccccc }));
+                        pin.position.set(-0.1 + i * 0.07, 0, 0.12);
+                        g.add(pin);
+                    }
+                    break;
+                    
+                case 'counter':
+                    const ctpkg = new THREE.Mesh(new THREE.BoxGeometry(0.25, 0.08, 0.18), m);
+                    g.add(ctpkg);
+                    break;
+                    
+                case 'xor':
+                case 'nand':
+                    const gate = new THREE.Mesh(new THREE.BoxGeometry(0.2, 0.15, 0.08), m);
+                    g.add(gate);
+                    break;
+                    
                 default:
                     g.add(new THREE.Mesh(new THREE.BoxGeometry(0.15, 0.15, 0.15), m));
             }
@@ -934,6 +990,58 @@
                     }
                     ctx.stroke();
                 }
+                else if (S.ckt === 'jk-toggle' || S.ckt === 'jk-clock') {
+                    // JK flip-flop square wave output
+                    ctx.strokeStyle = '#00ffff';
+                    ctx.lineWidth = 2;
+                    ctx.beginPath();
+                    const freq = S.ckt === 'jk-toggle' ? 2 : 5;
+                    for (let x = 0; x < W; x++) {
+                        const state = Math.floor((x / W) * freq) % 2;
+                        const y = H - state * (H * 0.6) - 40;
+                        x === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y);
+                    }
+                    ctx.stroke();
+                }
+                else if (S.ckt === 'counter4') {
+                    // 4-bit counter binary output
+                    ctx.strokeStyle = '#ff8800';
+                    ctx.lineWidth = 2;
+                    for (let bit = 0; bit < 4; bit++) {
+                        ctx.beginPath();
+                        for (let x = 0; x < W; x++) {
+                            const val = Math.floor((x / W) * 16) >> bit & 1;
+                            const y = H - 20 - bit * 30;
+                            x === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, val ? y : y + 15);
+                        }
+                        ctx.stroke();
+                    }
+                }
+                else if (S.ckt === 'pwm') {
+                    // PWM wave
+                    ctx.strokeStyle = '#88ff00';
+                    ctx.lineWidth = 2;
+                    const duty = S.R1 / (S.R1 + S.R2);
+                    ctx.beginPath();
+                    for (let x = 0; x < W; x++) {
+                        const state = (x / W) < duty ? 1 : 0;
+                        const y = H - state * (H * 0.7) - 30;
+                        x === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y);
+                    }
+                    ctx.stroke();
+                }
+                else if (S.ckt === 'pcm') {
+                    // PCM - pulse code modulation visualization
+                    ctx.strokeStyle = '#ff00ff';
+                    ctx.lineWidth = 2;
+                    ctx.beginPath();
+                    for (let x = 0; x < W; x++) {
+                        const amp = Math.sin((x / W) * 20 + t * 10);
+                        const y = H/2 + amp * (H * 0.35);
+                        x === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y);
+                    }
+                    ctx.stroke();
+                }
                 else {
                     ctx.strokeStyle = '#00ff00';
                     ctx.lineWidth = 2;
@@ -1042,6 +1150,22 @@
             else if (S.ckt === 'colpitts') {
                 s1 = 'fr=' + r.fcolp.toFixed(1) + 'Hz';
             }
+            else if (['jk-toggle','jk-clock'].includes(S.ckt)) {
+                s1 = 'Toggle FF';
+                s2 = 'J=' + (S.ckt === 'jk-toggle' ? '1' : 'Clock');
+            }
+            else if (S.ckt === 'counter4') {
+                s1 = '4-bit Counter';
+                s2 = 'Mod-16';
+            }
+            else if (S.ckt === 'pwm') {
+                s1 = 'PWM Out';
+                s2 = 'Duty=' + (S.R1 / (S.R1 + S.R2) * 100).toFixed(0) + '%';
+            }
+            else if (S.ckt === 'pcm') {
+                s1 = 'PCM Out';
+                s2 = '8-bit';
+            }
             else if (['bandpass','notch'].includes(S.ckt)) {
                 s1 = 'fc1=' + r.fc1.toFixed(0) + 'Hz';
                 s2 = 'fc2=' + r.fc2.toFixed(0) + 'Hz';
@@ -1062,7 +1186,7 @@
                 else if (p.t === 'capacitor') v = p.v * 1000000 + 'µ';
                 else if (p.t === 'battery') v = p.v + 'V';
                 
-                const ic = { resistor: '⚡', capacitor: '🔋', inductor: '🧲', led: '🔴', battery: '🔌', npn: '🔺', diode: '▶', timer555: '🕐', relay: '🪬' }[p.t] || '📦';
+                const ic = { resistor: '⚡', capacitor: '🔋', inductor: '🧲', led: '🔴', battery: '🔌', npn: '🔺', diode: '▶', timer555: '🕐', relay: '🪬', jkflip: '🟦', dflip: '🟩', counter: '🔢', xor: '⊕', nand: '⊼' }[p.t] || '📦';
                 list.innerHTML += '<div class="placed-item"><span>' + ic + ' ' + p.t + ' ' + v + '</span><button class="btn-x" onclick="rem(' + i + ')">×</button></div>';
             });
         }
