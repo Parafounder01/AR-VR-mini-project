@@ -547,6 +547,21 @@
     
     <div class="toast" id="toast"></div>
     
+    <!-- VR Info Popup -->
+    <div id="vr-popup" style="
+        position: fixed; top: 50%; left: 50%;
+        transform: translate(-50%, -50%);
+        background: rgba(15,15,22,0.95); border: 2px solid #FF70BF;
+        border-radius: 12px; padding: 20px; min-width: 280px;
+        display: none; z-index: 500;">
+        <h3 id="vr-popup-title" style="color: #FF70BF; margin-bottom: 12px; font-size: 16px;"></h3>
+        <div id="vr-popup-content" style="color: #e0e0e0; font-size: 12px; line-height: 1.6;"></div>
+        <button onclick="closeVRPopup()" style="
+            margin-top: 15px; padding: 8px 20px;
+            background: #462C7D; border: none; border-radius: 6px;
+            color: white; cursor: pointer;">Close</button>
+    </div>
+    
     <!-- AR Overlay -->
     <div class="ar-overlay" id="ar-overlay">
         <h2>🌐 AR Passthrough Mode</h2>
@@ -1348,8 +1363,46 @@
                     hitObj.userData.originalEmissive = hitObj.material.emissive.getHex();
                     hitObj.material.emissive.setHex(0x00ff00);
                 }
-                show('Selected: ' + hitObj.userData.t);
+                // Show VR popup with info
+                const compType = hitObj.userData.t || hitObj.parent?.userData?.t;
+                if (compType) {
+                    showVRPopup(compType);
+                }
+                show('Selected: ' + compType);
             }
+        }
+        
+        // ===== COMPONENT INFO FOR VR =====
+        const compInfo = {
+            resistor: { name: 'Resistor', desc: 'Limits current flow. Follows Ohm\'s Law: V=IR', pins: '2 leads', values: '10KΩ typical' },
+            capacitor: { name: 'Capacitor', desc: 'Stores energy in electric field. Used for filtering, timing.', pins: '2 leads', values: '1µF-47µF' },
+            inductor: { name: 'Inductor', desc: 'Stores energy in magnetic field. Opposes current changes.', pins: '2 leads', values: '10mH typical' },
+            led: { name: 'LED', desc: 'Light Emitting Diode. Emits light when current flows.', pins: 'Anode(+), Cathode(-)', values: '2V, 20mA' },
+            battery: { name: 'Battery', desc: 'Provides DC voltage source.', pins: '+V, GND', values: '9V typical' },
+            npn: { name: 'NPN Transistor', desc: 'Amplifies or switches electronic signals.', pins: 'Collector, Base, Emitter', values: 'β=100 typical' },
+            diode: { name: 'Diode', desc: 'Allows current in one direction only.', pins: 'Anode, Cathode', values: '0.7V drop' },
+            zener: { name: 'Zener Diode', desc: 'Regulates voltage when reverse-biased.', pins: 'Anode, Cathode', values: '5.1V typical' },
+            timer555: { name: '555 Timer IC', desc: 'Generates timing pulses. Used for oscillators, timers.', pins: '8 pins: VCC, TRG, OUT, RST, CTRL, THR, DIS, GND', values: '3-15V supply' },
+            relay: { name: 'Relay', desc: 'Electromechanical switch controlled by coil.', pins: 'Coil+, Coil-, NO, NC, COM', values: '5V coil' },
+            jkflip: { name: 'JK Flip-Flop', desc: 'Digital memory element. Toggles on clock pulse.', pins: 'J, K, CLK, Q, Q̄', values: 'Toggle, Set, Reset' },
+            dflip: { name: 'D Flip-Flop', desc: 'Stores one bit of data. Transfers on clock edge.', pins: 'D, CLK, Q, Q̄', values: 'Data latch' },
+            counter: { name: '4-bit Counter', desc: 'Counts 0-15 in binary. Increments on clock.', pins: 'CLK, Q0-Q3, RST', values: 'Mod-16' },
+            xor: { name: 'XOR Gate', desc: 'Exclusive OR. Output HIGH if inputs differ.', pins: 'A, B, Y', values: 'Logic gate' },
+            nand: { name: 'NAND Gate', desc: 'NOT-AND. Output LOW only if all inputs HIGH.', pins: 'A, B, Y', values: 'Universal gate' }
+        };
+        
+        function showVRPopup(type) {
+            const info = compInfo[type] || { name: type, desc: 'Component', pins: '-', values: '-' };
+            document.getElementById('vr-popup-title').textContent = info.name;
+            document.getElementById('vr-popup-content').innerHTML = 
+                '<p style="margin-bottom: 8px;">' + info.desc + '</p>' +
+                '<p><strong>Pins:</strong> ' + info.pins + '</p>' +
+                '<p><strong>Values:</strong> ' + info.values + '</p>';
+            document.getElementById('vr-popup').style.display = 'block';
+        }
+        
+        function closeVRPopup() {
+            document.getElementById('vr-popup').style.display = 'none';
         }
         
         function onVRSelectEnd(event) {
