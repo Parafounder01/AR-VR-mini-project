@@ -590,6 +590,15 @@
                 return;
             }
             init();
+            console.log('Three.js initialized');
+        });
+        
+        // Also try window load as backup
+        window.addEventListener('load', function() {
+            if (typeof THREE !== 'undefined' && !window._initialized) {
+                window._initialized = true;
+                console.log('Window loaded, start init');
+            }
         });
         
         // STATE
