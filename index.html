@@ -1209,11 +1209,26 @@
         function enterVR() {
             if (navigator.xr) {
                 navigator.xr.isSessionSupported('immersive-vr').then(s => {
-                    if (s) alert('VR: Open this URL in Quest browser');
-                    else show('Deploy to HTTPS first');
+                    if (s) {
+                        // Try to start VR session
+                        navigator.xr.requestSession('immersive-vr', {
+                            optionalFeatures: ['local-floor', 'bounded-floor']
+                        }).then(session => {
+                            session.addEventListener('end', () => {
+                                show('VR session ended');
+                            });
+                            rdr.xr.enabled = true;
+                            rdr.xr.setSession(session);
+                            show('VR Mode Active - Use Quest controllers');
+                        }).catch(e => {
+                            alert('Could not start VR: ' + e.message);
+                        });
+                    } else {
+                        show('VR not supported on this device');
+                    }
                 });
             } else {
-                show('Use Quest browser');
+                show('WebXR not available. Use Quest 2/3 browser.');
             }
         }
         
@@ -1226,17 +1241,40 @@
             if (navigator.xr) {
                 navigator.xr.isSessionSupported('immersive-ar').then(s => {
                     if (s) {
-                        alert('AR: Starting AR session...\n\nNote: Camera passthrough requires HTTPS and Quest 3 browser with camera permissions.');
+                        navigator.xr.requestSession('immersive-ar', {
+                            requiredFeatures: ['local-floor'],
+                            optionalFeatures: ['hit-test', 'dom-overlay']
+                        }).then(session => {
+                            session.addEventListener('end', () => {
+                                show('AR session ended');
+                                // Restore background
+                                scn.background = new THREE.Color(0x0a0a0f);
+                            });
+                            rdr.xr.enabled = true;
+                            rdr.xr.setSession(session);
+                            // Enable camera passthrough
+                            scn.background = null;
+                            show('AR Mode Active - Camera passthrough enabled');
+                        }).catch(e => {
+                            alert('Could not start AR: ' + e.message);
+                        });
                     } else {
-                        alert('AR not supported. Use Quest 3 browser with HTTPS.');
+                        alert('AR not supported. Use Quest 3 browser with camera permissions.');
                     }
                 });
             } else {
                 alert('WebXR AR not available.\n\nTo use AR:\n1. Deploy to HTTPS\n2. Open in Quest 3 browser\n3. Grant camera permissions');
             }
         }
+                alert('WebXR AR not available.\n\nTo use AR:\n1. Deploy to HTTPS\n2. Open in Quest 3 browser\n3. Grant camera permissions');
+            }
+        }
         
         function animate() {
+            // For WebXR VR mode, Three.js handles the loop automatically
+            if (rdr.xr.isPresenting) {
+                return;
+            }
             requestAnimationFrame(animate);
             rdr.render(scn, cam);
         }
