@@ -573,6 +573,25 @@
 
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
     <script>
+        // GLOBAL ERROR HANDLING
+        window.onerror = function(msg, url, line, col, error) {
+            console.error('Error:', msg, 'line:', line);
+            document.getElementById('toast').textContent = 'Error: ' + msg;
+            document.getElementById('toast').classList.add('show');
+            return false;
+        };
+        
+        // Wait for DOM and Three.js
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log('DOM loaded, starting Three.js...');
+            if (typeof THREE === 'undefined') {
+                document.getElementById('toast').textContent = 'Three.js not loading!';
+                document.getElementById('toast').classList.add('show');
+                return;
+            }
+            init();
+        });
+        
         // STATE
         const S = { 
             ckt: 'rc-low', run: false, 
@@ -1510,8 +1529,6 @@
             requestAnimationFrame(animate);
             rdr.render(scn, cam);
         }
-        
-        init();
     </script>
 </body>
 </html>
