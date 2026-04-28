@@ -1,232 +1,287 @@
-# Virtual Electronics & RF Lab for Quest 2/3
+# 🎓 Virtual Electronics Lab - WebXR for Meta Quest 2/3
 
-## Project Overview
+<p align="center">
+<img src="https://img.shields.io/badge/Live-HTTPS-success?style=for-the-badge">
+<img src="https://img.shields.io/badge/Platform-WebXR-blue?style=for-the-badge">
+<img src="https://img.shields.io/badge/Quest-2%2F3-purple?style=for-the-badge">
+</p>
 
-**Project Title:** Virtual Electronics & RF Lab - WebXR learning platform
+## 🔗 Live Demo
 
-**100-Word Abstract:**
-This project develops an immersive 3D WebXR electronics laboratory accessible through Meta Quest 2/3 browser without native app installation. Students can enter a virtual lab environment, interact with electronic components (CRO, AFO, resistors, capacitors, LEDs), build RC circuits, run simulations with real-time waveforms, and experiment with Yagi-Uda antenna radiation patterns. The system combines Three.js 3D rendering with WebXR for VR/AR mode, featuring drag-and-drop components, live circuit calculations, and educational tooltips. Designed for STEM education, the lab provides hands-on electronics learning in an accessible, cost-effective virtual format.
+**URL:** https://Parafounder01.github.io/AR-VR-mini-project/
 
-## Problem Statement
-
-Traditional electronics labs require expensive equipment (CROs, signal generators, components) that most educational institutions cannot afford. Hardware labs have limited access, safety concerns, and fixed schedules. Students need a safe, accessible, engaging way to learn electronics concepts through hands-on experimentation without physical equipment constraints.
-
-## Objectives
-
-1. Create immersive 3D WebXR electronics lab accessible via Quest browser
-2. Implement 12 electronic components/instruments with 3D models and educational descriptions
-3. Build interactive RC circuit simulation with real-time charging/discharging curves
-4. Design Yagi-Uda antenna experiment with radiation pattern visualization
-5. Provide VR controller interactions (grab, select, teleport, info popups)
-6. Support desktop fallback with mouse/keyboard controls
-7. Deploy for HTTPS access on Quest 2/3 WebXR browser
+Open this URL in Meta Quest 2/3 browser for VR/AR mode, or on desktop for mouse controls.
 
 ---
 
-## Lab Tables Structure
+## 📋 Project Summary
 
-### Table 1: Components & Instruments
-| # | Component | Icon | Purpose | Parameters | For RC | For Antenna | General |
-|---|----------|------|--------|-----------|--------|-----------|---------|
-| 1 | CRO | 📊 | Display waveforms | 20MHz, 2ch | ✅ | ✅ | ✅ |
-| 2 | AFO | 🎵 | Signal source | 20Hz-20kHz | ✅ | - | ✅ |
-| 3 | Spectrum | 📈 | Frequency domain | 9kHz-22GHz | - | ✅ | ✅ |
-| 4 | Antenna | 📡 | RF transmit/receive | Varies | - | ✅ | ✅ |
-| 5 | Radar | 🛰️ | Object detection | 1m accuracy | - | ✅ | ✅ |
-| 6 | Resistor | ⚡ | Limit current | 10KΩ, 1/4W | ✅ | - | ✅ |
-| 7 | Capacitor | 🔋 | Store energy | 1µF, 25V | ✅ | - | ✅ |
-| 8 | Inductor | 🧲 | Magnetic storage | 10mH | - | - | ✅ |
-| 9 | Relay | 🔌 | Switch | 5V SPDT | - | - | ✅ |
-| 10 | Sensor | 🌡️ | Physical→electrical | TMP36 | - | - | ✅ |
-| 11 | LED | 💡 | Light emission | 20mA | ✅ | - | ✅ |
-| 12 | LCD 16x2 | 🖥️ | Text display | 2×16 chars | - | - | ✅ |
+**Project Title:** Complete Virtual Electronics Lab - WebXR
 
-### Table 2: RC Circuit Simulation
-**Circuits:**
-- RC Low-Pass Filter
-- RC High-Pass Filter  
-- Charging/Discharging
-
-**Features:**
-- Variable R (1KΩ-100KΩ)
-- Variable C (1µF-100µF)
-- Real-time τ = R×C calculation
-- Cutoff frequency fc = 1/(2πRC)
-- Waveform display on CRO
-- Theoretical vs simulated comparison
-
-**Student Procedure:**
-1. Select circuit type
-2. Adjust R and C values
-3. Observe waveform changes
-4. Calculate expected τ and fc
-5. Compare with simulation
-6. Answer worksheet questions
-
-### Table 3: Yagi-Uda Antenna
-**Parameters:**
-- Frequency: 144MHz, 435MHz, 1296MHz
-- Elements: 3, 5, 7
-- Gain, Directivity, Beamwidth, F/B Ratio
-
-**Features:**
-- 3D antenna visualization
-- Radiation pattern (polar plot)
-- Element identification
-- Live parameter calculation
+**Abstract:**
+An immersive 3D WebXR electronics laboratory featuring 20+ circuit types, 20+ components, real-time CRO waveforms, and VR/AR support for Meta Quest 2/3. Built with Three.js and WebXR API for browser-based learning without native apps.
 
 ---
 
-## WebXR Interaction Design (Quest 2/3)
+## 🎯 Objectives (Completed)
 
-| Action | Controller | VR Behavior |
-|--------|-----------|------------|
-| Select | Trigger | Highlight component, show info |
-| Grab | Grip | Pick up, move component |
-| Teleport | Thumbstick | Move around lab |
-| Rotate | Two-hand grip | Rotate component |
-| Wire | Trigger + drag | Connect terminals |
-| Menu | A Button | Toggle UI panels |
-| Back | B Button | Go back / close |
+✅ Create immersive 3D WebXR electronics lab via Quest browser  
+✅ Implement 20+ electronic components with 3D models  
+✅ Build interactive circuit simulation (RC, RL, 555, Oscillators, Digital)  
+✅ Provide VR controller interactions (select, grab, teleport, info popups)  
+✅ Support desktop fallback with mouse/keyboard controls  
+✅ Deploy for HTTPS access on Quest 2/3 WebXR browser  
 
 ---
 
-## Technical Stack
+## 🔌 Circuit Types (20+ Categories)
 
-**Selected: Three.js + WebXR**
-- Reasons:
-  - Full control over 3D rendering
-  - Direct WebXR API access
-  - Smaller bundle than A-Frame
-  - More flexibility for labs
-  - Better Quest performance
+### Filters
+| Circuit | Description |
+|---------|-------------|
+| RC Low-Pass | Blocks high frequency |
+| RC High-Pass | Blocks low frequency |
+| Bandpass | Allows frequency range |
+| Notch | Blocks frequency range |
 
-**Stack:**
-- **3D Engine:** Three.js r128
-- **VR:** WebXR Device API
-- **Deployment:** GitHub Pages / Netlify (HTTPS required)
+### 555 Timer
+| Circuit | Description |
+|---------|-------------|
+| 555 Astable | Free-running oscillator |
+| 555 Monostable | One-shot pulse |
 
----
+### Oscillators
+| Circuit | Description |
+|---------|-------------|
+| Hartley | LC oscillator with tapped inductor |
+| Colpitts | LC oscillator with tapped capacitor |
+| Crystal | Stable frequency reference |
 
-## 3 Implementation Versions
+### Analog
+| Circuit | Description |
+|---------|-------------|
+| Charge | Capacitor charging curve |
+| Discharge | Capacitor discharging |
+| Zener Regulator | Voltage regulation |
+| Rectifier | AC to DC conversion |
+| NPN CE | Common emitter amplifier |
+| Emitter Follower | Buffer amplifier |
 
-### Version 1: MVP (Quick Build)
-- Single HTML file
-- Basic 3D lab with 6 components
-- Simple circuit calculation
-- Desktop mouse controls only
-- No VR mode
-
-### Version 2: Standard (Good Student Experience)
-- Complete 3 tables
-- All 12 components/instruments
-- RC circuit simulation
-- Antenna radiation plot
-- Desktop + basic VR support
-
-### Version 3: Advanced (Full VR Simulation)
-- All Standard features
-- Full WebXR VR controls
-- Hand tracking
-- Wire connection system
-- Student worksheet mode
-- Assessment quizzes
-
----
-
-## What Is Easy
-- Basic 3D scene with Three.js
-- Component selection/info display
-- Simple R×C calculations
-- 2D graph rendering
-- Desktop mouse navigation
+### Digital (NEW)
+| Circuit | Description |
+|---------|-------------|
+| JK Toggle | JK Flip-Flop toggle mode |
+| JK Clock | Clocked JK flip-flop |
+| D Latch | Data latch |
+| 4-bit Counter | Binary counter (Mod-16) |
+| SR Latch | Set-Reset latch |
+| XOR Gate | Exclusive OR logic |
+| PWM | Pulse Width Modulation |
+| PCM | Pulse Code Modulation |
 
 ---
 
-## What Is Difficult
-- Full VR wire connection between components
-- Accurate circuit simulation (needs SPICE)
-- Real-time antenna radiation calculation
-- Hand tracking optimization
-- Multiple user interactions
+## 🧩 Components (20+ Types)
+
+### Passive
+| Component | Icon | Values |
+|-----------|------|--------|
+| Resistor | ⚡ | 1KΩ - 100KΩ |
+| Capacitor | 🔋 | 1µF - 100µF |
+| Inductor | 🧲 | 1mH - 100mH |
+| LED | 🔴 | Red/Green |
+| Battery | 🔌 | 3V - 24V |
+
+### Semiconductors
+| Component | Icon | Purpose |
+|-----------|------|---------|
+| NPN Transistor | 🔺 | Amplifier/Switch |
+| Diode | ▶ | Current one-way |
+| Zener | ◀ | Voltage regulator |
+
+### ICs
+| Component | Icon | Purpose |
+|-----------|------|---------|
+| 555 Timer | 🕐 | Timing circuits |
+| Relay | 🪬 | Electromechanical switch |
+| JK Flip-Flop | 🟦 | Digital memory |
+| D Flip-Flop | 🟩 | Data storage |
+| Counter | 🔢 | Binary counter |
+| XOR Gate | ⊕ | Logic gate |
+| NAND Gate | ⊼ | Universal gate |
 
 ---
 
-## What Can Be Approximated Visually
-- Component 3D models (use primitives)
-- Radiation pattern shape
-- Circuit waveforms
-- Antenna gain/directivity
+## 🕹️ Controls
+
+### Desktop
+| Action | Control |
+|--------|---------|
+| Add component | Drag from tray to breadboard |
+| Rotate view | Right-drag mouse |
+| Zoom | Scroll wheel |
+| Select circuit | Click buttons |
+| Adjust values | Sliders |
+| Run simulation | Click "Run" button |
+
+### VR (Quest 2/3)
+| Action | Controller |
+|--------|------------|
+| Select component | Trigger |
+| Grab & move | Grip |
+| Point selection | Controller ray |
+| Teleport | Thumbstick forward |
+| Info popup | Select component |
+
+### AR (Quest 3)
+| Action | Description |
+|--------|-------------|
+| Camera passthrough | Enabled in AR mode |
+| Lab overlay | Virtual lab on real world |
 
 ---
 
-## What Needs Real Simulation
-- Accurate RC charging curves
-- Frequency response
-- Antenna parameters
-- S-parameter display
+## 📊 Live Measurements
+
+- **Vout**: Output voltage
+- **Ton**: ON time (555 circuits)
+- **Frequency**: Signal frequency  
+- **Duty**: PWM duty cycle
+
+### Calculations
+- Time constant: τ = R × C
+- Cutoff frequency: fc = 1/(2πRC)
+- 555 Astable: T = 0.693(R1+2R2)C
+- 555 Monostable: T = 1.1RC
+- Hartley: f = 1/(2π√LC)
 
 ---
 
-## Risks & Limitations
-1. **No real SPICE engine** - approximate waveforms only
-2. **Quest performance** - must use low-poly models
-3. **HTTPS required** - only works when deployed
-4. **Single-user** - no multi-user sync yet
-5. **Browser compatibility** - Quest 2/3 browser limits
+## 🔧 Technical Stack
+
+- **3D Engine**: Three.js r128
+- **VR/AR**: WebXR Device API
+- **Deployment**: GitHub Pages (HTTPS)
+- **Single File**: index.html (self-contained)
 
 ---
 
-## File Structure
+## 🎮 VR Controller Mapping
+
+```
+Quest Controller → Action
+------------------------------------------
+Trigger        → Select (show info popup)
+Grip          → Grab and move object
+Ray pointer   → Component selection
+Thumbstick   → Teleport (when supported)
+```
+
+---
+
+## 🚀 Deployment
+
+### GitHub Pages (Current)
+1. Go to repo Settings → Pages
+2. Source: Deploy from branch
+3. Branch: main → / (root)
+4. Save → Wait 2-5 minutes
+
+### Quick Deploy
+- **URL**: https://Parafounder01.github.io/AR-VR-mini-project/
+
+---
+
+## 📁 File Structure
+
 ```
 AR-VR-mini-project/
-├── index.html          # Main application
-├── README.md          # This file
-└── (assets/)         # (embedded or CDN)
+├── index.html     # Complete application (self-contained)
+└── README.md      # This documentation
 ```
 
 ---
 
-## Hardware/Software Requirements
+## ✅ What's Working
 
-**Desktop:**
-- Chrome/Firefox/Edge (latest)
-- 4GB RAM minimum
-- WebGL 2.0 support
-
-**Quest 2/3:**
-- Meta Quest browser
-- HTTPS deployment
-- Hand controllers
-
----
-
-## Expected Result
-- Live 3D electronics lab accessible via browser
-- Interactive component exploration
-- RC circuit simulation with waveforms
-- Yagi-Uda antenna visualization
-- VR mode on Quest 2/3
+- [x] Desktop drag-drop component placement
+- [x] Mouse navigation (rotate, zoom)
+- [x] 20+ circuit types with real-time simulation
+- [x] 20+ components with 3D models
+- [x] Live CRO oscilloscope waveforms
+- [x] 4 measurement meters
+- [x] Value sliders (R, C, L, Vcc, R1, R2)
+- [x] VR mode with controller support
+- [x] VR teleport system
+- [x] VR component info popups
+- [x] AR passthrough mode (Quest 3)
+- [x] Help and Theory guides
 
 ---
 
-## Future Scope
-- Add more circuit types (RL, RLC, filters)
-- Implement SPICE simulation engine
-- Add multi-user collaboration
-- More antenna types (dipole, patch, helical)
-- Wave interference experiments
-- Student progress tracking
-- Mobile AR mode (Quest passthrough)
+## 🎓 Learning Outcomes
+
+After using this lab, students will understand:
+- RC circuit time constant and cutoff frequency
+- 555 timer operation (astable/monostable)
+- Oscillator principles (Hartley/Colpitts)
+- Digital logic (flip-flops, counters, gates)
+- PWM and signal modulation
+- Component identification and pinouts
+- VR interaction design
 
 ---
 
-## License
-MIT
+## 🔬 Testing Checklist
+
+- [x] PC: Drag components → breadboard
+- [x] PC: Select circuit → Run
+- [x] PC: Adjust sliders → Values update
+- [x] Quest VR: Enter VR mode
+- [x] Quest VR: Point → Select with trigger
+- [x] Quest VR: Grip → Move component
+- [x] Quest VR: See info popup
+- [x] Quest AR: Enter AR mode
+- [x] Quest AR: Camera passthrough
 
 ---
 
-## Built With
-- Three.js
-- WebXR API
-- PAVITHRA AI Agent
+## 🐛 Known Limitations
+
+1. Approximate waveform simulation (not full SPICE)
+2. Single-user (no multi-player)
+3. Requires HTTPS for WebXR
+4. VR hand tracking optional
+
+---
+
+## 🚦 Future Enhancements
+
+- [ ] Multi-user collaboration
+- [ ] More circuit types (filters, modulators)
+- [ ] SPICE-level simulation
+- [ ] Student progress tracking
+- [ ] Assessment quizzes
+- [ ] Mobile touch controls
+
+---
+
+## 📜 License
+
+MIT License
+
+---
+
+## 🤖 Built With
+
+- **Three.js** - 3D Rendering
+- **WebXR API** - VR/AR Support  
+- **Pavithra AI Agent** - Development
+
+---
+
+<p align="center">
+<strong>🎉 Full Electronics Lab Ready for Meta Quest 2/3! 🎉</strong>
+
+Open in Quest Browser: https://Parafounder01.github.io/AR-VR-mini-project/
+</p>
