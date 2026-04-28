@@ -571,26 +571,34 @@
         <p style="margin-top: 20px; font-size: 9px;">(Opens in Quest browser with camera access)</p>
     </div>
 
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
     <script>
-        // GLOBAL ERROR HANDLING
+        // ERROR HANDLING
         window.onerror = function(msg, url, line, col, error) {
             console.error('Error:', msg, 'line:', line);
-            document.getElementById('toast').textContent = 'Error: ' + msg;
-            document.getElementById('toast').classList.add('show');
+            var t = document.getElementById('toast');
+            if (t) {
+                t.textContent = 'Error: ' + msg;
+                t.classList.add('show');
+            }
             return false;
         };
         
-        // Wait for DOM and Three.js
-        document.addEventListener('DOMContentLoaded', function() {
-            console.log('DOM loaded, starting Three.js...');
-            if (typeof THREE === 'undefined') {
-                document.getElementById('toast').textContent = 'Three.js not loading!';
-                document.getElementById('toast').classList.add('show');
-                return;
+        // Try init immediately when script runs
+        try {
+            if (typeof THREE !== 'undefined') {
+                init();
+            } else {
+                // Wait for Three.js to load
+                setTimeout(function() {
+                    if (typeof THREE !== 'undefined') {
+                        init();
+                    }
+                }, 500);
             }
-            init();
-        });
+        } catch(e) {
+            console.error('Init error:', e);
+        }
         
         // STATE
         const S = { 
@@ -1527,7 +1535,7 @@
                 return;
             }
             requestAnimationFrame(animate);
-            rdr.render(scn, cam);
+rdr.render(scn, cam);
         }
     </script>
 </body>
