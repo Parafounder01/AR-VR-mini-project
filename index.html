@@ -3,26 +3,41 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Interactive Electronics Lab - RC Oscillator</title>
+    <title>Virtual Electronics & RF Lab - WebXR</title>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600&family=Space+Grotesk:wght@400;600;700&display=swap');
+        
+        :root {
+            --bg-dark: #0a0a0f;
+            --bg-panel: rgba(15,15,22,0.92);
+            --accent-purple: #462C7D;
+            --accent-pink: #FF70BF;
+            --accent-magenta: #831C91;
+            --accent-rose: #D552A3;
+            --text-primary: #e0e0e0;
+            --text-secondary: #888;
+            --grid-color: #1a1a25;
+            --success: #00ff88;
+        }
         
         * { margin: 0; padding: 0; box-sizing: border-box; }
         
         body {
             font-family: 'Space Grotesk', sans-serif;
-            background: #0a0a0f;
-            color: #e0e0e0;
+            background: var(--bg-dark);
+            color: var(--text-primary);
             overflow: hidden;
             height: 100vh;
         }
         
         #canvas { width: 100%; height: 100%; display: block; }
         
-        /* Top Bar */
-        .top-bar {
+        /* Header */
+        .header {
             position: fixed;
-            top: 0; left: 0; right: 0;
+            top: 0;
+            left: 0;
+            right: 0;
             padding: 16px 24px;
             background: linear-gradient(180deg, rgba(10,10,15,0.95) 0%, transparent 100%);
             display: flex;
@@ -33,44 +48,74 @@
         
         .logo {
             font-family: 'JetBrains Mono', monospace;
-            font-size: 18px;
+            font-size: 16px;
             font-weight: 600;
-            color: #00ff88;
-            letter-spacing: 1px;
+            background: linear-gradient(90deg, var(--accent-pink), var(--success));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
         }
         
-        .mode-indicator {
-            display: flex;
-            align-items: center;
-            gap: 8px;
+        .vr-button {
+            background: linear-gradient(135deg, var(--accent-purple), var(--accent-magenta));
+            border: none;
+            color: white;
+            padding: 10px 20px;
+            border-radius: 8px;
+            font-family: 'JetBrains Mono', monospace;
             font-size: 12px;
-            color: #666;
+            cursor: pointer;
+            transition: all 0.3s ease;
         }
         
-        .mode-dot {
-            width: 8px; height: 8px;
-            border-radius: 50%;
-            background: #333;
+        .vr-button:hover {
+            transform: scale(1.05);
+            box-shadow: 0 0 20px rgba(131, 28, 145, 0.5);
         }
         
-        .mode-dot.active {
-            background: #00ff88;
-            box-shadow: 0 0 10px #00ff88;
-            animation: pulse 2s infinite;
+        /* Navigation Tabs */
+        .nav-tabs {
+            position: fixed;
+            top: 70px;
+            left: 50%;
+            transform: translateX(-50%);
+            display: flex;
+            gap: 4px;
+            background: var(--bg-panel);
+            padding: 6px;
+            border-radius: 12px;
+            border: 1px solid #2a2a35;
+            z-index: 100;
         }
         
-        @keyframes pulse {
-            0%, 100% { opacity: 1; }
-            50% { opacity: 0.5; }
+        .nav-tab {
+            padding: 10px 24px;
+            border-radius: 8px;
+            font-size: 13px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            background: transparent;
+            border: none;
+            color: var(--text-secondary);
         }
         
-        /* Info Panels */
+        .nav-tab.active {
+            background: linear-gradient(135deg, var(--accent-purple), var(--accent-magenta));
+            color: white;
+        }
+        
+        .nav-tab:hover:not(.active) {
+            background: rgba(255,255,255,0.05);
+            color: var(--text-primary);
+        }
+        
+        /* Panels */
         .panel {
             position: fixed;
-            background: rgba(15,15,22,0.92);
+            background: var(--bg-panel);
             border: 1px solid #2a2a35;
             border-radius: 12px;
-            padding: 16px;
+            padding: 20px;
             backdrop-filter: blur(12px);
             z-index: 100;
         }
@@ -78,10 +123,10 @@
         .panel-title {
             font-family: 'JetBrains Mono', monospace;
             font-size: 11px;
-            color: #666;
+            color: var(--accent-pink);
             text-transform: uppercase;
             letter-spacing: 1.5px;
-            margin-bottom: 12px;
+            margin-bottom: 16px;
             display: flex;
             align-items: center;
             gap: 8px;
@@ -89,1249 +134,1407 @@
         
         .panel-title::before {
             content: '';
-            width: 3px; height: 12px;
-            background: linear-gradient(180deg, #00ff88, #0088ff);
+            width: 3px;
+            height: 14px;
+            background: linear-gradient(180deg, var(--accent-pink), var(--accent-rose));
             border-radius: 2px;
         }
         
-        /* Component Panel - Left */
+        /* Component Panel */
         .component-panel {
-            top: 80px; left: 20px;
-            width: 200px;
+            top: 120px;
+            left: 20px;
+            width: 280px;
+            max-height: calc(100vh - 160px);
+            overflow-y: auto;
+        }
+        
+        .component-list {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
         }
         
         .component-item {
-            display: flex;
-            align-items: center;
-            gap: 12px;
-            padding: 10px 12px;
-            margin-bottom: 8px;
-            background: #1a1a24;
+            background: rgba(255,255,255,0.03);
             border: 1px solid #2a2a35;
             border-radius: 8px;
+            padding: 14px;
             cursor: grab;
-            transition: all 0.2s;
+            transition: all 0.3s ease;
         }
         
         .component-item:hover {
-            border-color: #00ff88;
-            background: #1f1f2a;
+            border-color: var(--accent-purple);
+            background: rgba(70, 44, 125, 0.2);
+            transform: translateY(-2px);
         }
         
-        .component-item:active {
-            cursor: grabbing;
+        .component-item .icon {
+            font-size: 24px;
+            margin-bottom: 8px;
         }
         
-        .component-item.placed {
-            border-color: #00ff88;
-            opacity: 0.6;
-        }
-        
-        .component-icon {
-            width: 32px; height: 32px;
-            border-radius: 6px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 16px;
-        }
-        
-        .component-icon.R { background: linear-gradient(135deg, #8B4513, #a0522d); }
-        .component-icon.C { background: linear-gradient(135deg, #4169E1, #1e40af); }
-        .component-icon.IC { background: linear-gradient(135deg, #333, #555); }
-        .component-icon.LED { background: linear-gradient(135deg, #222, #333); }
-        
-        .component-info { flex: 1; }
-        
-        .component-name {
-            font-size: 13px;
-            font-weight: 600;
-            color: #e0e0e0;
-        }
-        
-        .component-value {
-            font-family: 'JetBrains Mono', monospace;
-            font-size: 11px;
-            color: #00ff88;
-        }
-        
-        /* Circuit Status Panel - Right */
-        .circuit-panel {
-            top: 80px; right: 20px;
-            width: 220px;
-        }
-        
-        .circuit-item {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            padding: 8px 0;
-            border-bottom: 1px solid #222;
-        }
-        
-        .circuit-item:last-child { border-bottom: none; }
-        
-        .circuit-status {
-            width: 10px; height: 10px;
-            border-radius: 50%;
-            background: #333;
-            transition: all 0.3s;
-        }
-        
-        .circuit-status.connected {
-            background: #00ff88;
-            box-shadow: 0 0 12px #00ff88;
-        }
-        
-        .circuit-label {
-            font-size: 13px;
-            color: #888;
-        }
-        
-        .circuit-value {
-            font-family: 'JetBrains Mono', monospace;
+        .component-item .name {
             font-size: 12px;
-            color: #0088ff;
-            margin-left: auto;
+            font-weight: 600;
+            margin-bottom: 4px;
         }
         
-        /* CRO Panel - Bottom Left */
-        .cro-panel {
-            bottom: 100px; left: 20px;
+        .component-item .desc {
+            font-size: 10px;
+            color: var(--text-secondary);
+        }
+        
+        /* Info Panel */
+        .info-panel {
+            top: 120px;
+            right: 20px;
             width: 320px;
         }
         
-        .cro-display {
+        .info-section {
+            margin-bottom: 16px;
+        }
+        
+        .info-section h4 {
+            font-size: 12px;
+            color: var(--accent-pink);
+            margin-bottom: 8px;
+        }
+        
+        .info-section p {
+            font-size: 12px;
+            color: var(--text-secondary);
+            line-height: 1.6;
+        }
+        
+        .param-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 8px;
+        }
+        
+        .param-item {
+            background: rgba(255,255,255,0.03);
+            padding: 10px;
+            border-radius: 6px;
+        }
+        
+        .param-item .label {
+            font-size: 10px;
+            color: var(--text-secondary);
+        }
+        
+        .param-item .value {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 14px;
+            color: var(--success);
+        }
+        
+        /* CRO Display */
+        .cro-panel {
+            bottom: 20px;
+            left: 20px;
+            width: 400px;
+            height: 200px;
+        }
+        
+        #cro-canvas {
             width: 100%;
             height: 140px;
-            background: #000;
-            border: 2px solid #1a3a1a;
+            background: #0a0a0a;
             border-radius: 8px;
+            border: 1px solid #333;
+        }
+        
+        /* Circuit Panel */
+        .circuit-panel {
+            top: 120px;
+            right: 20px;
+            width: 360px;
+        }
+        
+        .circuit-type-tabs {
+            display: flex;
+            gap: 4px;
+            margin-bottom: 16px;
+        }
+        
+        .circuit-type-tab {
+            flex: 1;
+            padding: 8px;
+            background: transparent;
+            border: 1px solid #2a2a35;
+            border-radius: 6px;
+            font-size: 11px;
+            cursor: pointer;
+            color: var(--text-secondary);
+            transition: all 0.3s ease;
+        }
+        
+        .circuit-type-tab.active {
+            background: var(--accent-purple);
+            border-color: var(--accent-purple);
+            color: white;
+        }
+        
+        .slider-group {
+            margin-bottom: 16px;
+        }
+        
+        .slider-group label {
+            display: flex;
+            justify-content: space-between;
+            font-size: 12px;
+            margin-bottom: 8px;
+        }
+        
+        .slider-group input[type="range"] {
+            width: 100%;
+            height: 6px;
+            border-radius: 3px;
+            background: #2a2a35;
+            appearance: none;
+        }
+        
+        .slider-group input[type="range"]::-webkit-slider-thumb {
+            appearance: none;
+            width: 18px;
+            height: 18px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, var(--accent-pink), var(--accent-magenta));
+            cursor: pointer;
+        }
+        
+        .formula-box {
+            background: rgba(0,255,136,0.1);
+            border: 1px solid rgba(0,255,136,0.3);
+            border-radius: 8px;
+            padding: 12px;
+            text-align: center;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 14px;
+            color: var(--success);
+            margin-bottom: 16px;
+        }
+        
+        .graph-container {
+            height: 180px;
+            background: #0a0a0a;
+            border-radius: 8px;
+            border: 1px solid #333;
             position: relative;
             overflow: hidden;
         }
         
-        .cro-canvas {
+        #circuit-canvas {
             width: 100%;
             height: 100%;
         }
         
-        .cro-label {
-            position: absolute;
-            top: 8px; left: 12px;
-            font-family: 'JetBrains Mono', monospace;
-            font-size: 10px;
-            color: #00ff00;
-            opacity: 0.7;
+        /* Antenna Panel */
+        .antenna-panel {
+            top: 120px;
+            right: 20px;
+            width: 360px;
         }
         
-        /* Formula Panel - Bottom Right */
-        .formula-panel {
-            bottom: 100px; right: 20px;
-            width: 240px;
-        }
-        
-        .formula-item {
-            margin-bottom: 12px;
-        }
-        
-        .formula-label {
-            font-size: 11px;
-            color: #555;
-            margin-bottom: 4px;
-        }
-        
-        .formula-value {
-            font-family: 'JetBrains Mono', monospace;
-            font-size: 16px;
-            font-weight: 600;
-            color: #00ff88;
-        }
-        
-        .formula-result {
-            font-size: 14px;
-            color: #0088ff;
-            margin-top: 2px;
-        }
-        
-        /* Bottom Controls */
-        .controls {
-            position: fixed;
-            bottom: 20px; left: 50%;
-            transform: translateX(-50%);
-            display: flex;
+        .antenna-controls {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
             gap: 12px;
-            padding: 12px 20px;
-            background: rgba(15,15,22,0.9);
-            border: 1px solid #2a2a35;
-            border-radius: 16px;
-            z-index: 100;
+            margin-bottom: 16px;
         }
         
-        .btn {
-            padding: 10px 20px;
-            border: none;
+        .control-group label {
+            display: block;
+            font-size: 11px;
+            color: var(--text-secondary);
+            margin-bottom: 6px;
+        }
+        
+        .control-group input, .control-group select {
+            width: 100%;
+            padding: 8px;
+            background: #1a1a25;
+            border: 1px solid #2a2a35;
+            border-radius: 6px;
+            color: var(--text-primary);
+            font-size: 12px;
+        }
+        
+        .radiation-display {
+            height: 200px;
+            background: #0a0a0a;
             border-radius: 8px;
-            font-family: 'Space Grotesk', sans-serif;
+            border: 1px solid #333;
+            position: relative;
+        }
+        
+        #antenna-canvas {
+            width: 100%;
+            height: 100%;
+        }
+        
+        .antenna-stats {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 8px;
+            margin-top: 12px;
+        }
+        
+        .stat-item {
+            text-align: center;
+            padding: 8px;
+            background: rgba(255,255,255,0.03);
+            border-radius: 6px;
+        }
+        
+        .stat-item .label {
+            font-size: 9px;
+            color: var(--text-secondary);
+        }
+        
+        .stat-item .value {
+            font-family: 'JetBrains Mono', monospace;
             font-size: 13px;
-            font-weight: 600;
-            cursor: pointer;
-            transition: all 0.2s;
+            color: var(--accent-pink);
+        }
+        
+        /* Lab Table Selection */
+        .table-selector {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
             display: flex;
-            align-items: center;
+            flex-direction: column;
             gap: 8px;
         }
         
-        .btn-primary {
-            background: linear-gradient(135deg, #00aa66, #00dd88);
-            color: #000;
+        .table-btn {
+            padding: 12px 20px;
+            background: var(--bg-panel);
+            border: 1px solid #2a2a35;
+            border-radius: 8px;
+            color: var(--text-primary);
+            font-size: 12px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-align: left;
         }
         
-        .btn-secondary {
-            background: #2a2a35;
-            color: #888;
-            border: 1px solid #3a3a45;
+        .table-btn:hover, .table-btn.active {
+            border-color: var(--accent-pink);
+            background: rgba(255, 112, 191, 0.1);
         }
         
-        .btn-secondary:hover {
-            background: #3a3a45;
-            color: #e0e0e0;
+        .table-btn .table-num {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 10px;
+            color: var(--accent-pink);
         }
         
-        .btn-ar {
-            background: linear-gradient(135deg, #0066aa, #0088dd);
-            color: #fff;
-        }
-        
-        .btn:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 4px 16px rgba(0,255,136,0.2);
-        }
-        
-        /* Instructions */
-        .instructions {
+        /* Educational Tooltip */
+        .edu-tooltip {
             position: fixed;
-            bottom: 80px;
+            bottom: 20px;
             left: 50%;
             transform: translateX(-50%);
+            background: var(--bg-panel);
+            border: 1px solid var(--accent-purple);
+            border-radius: 8px;
+            padding: 12px 20px;
+            max-width: 600px;
             font-size: 12px;
-            color: #444;
-            text-align: center;
-        }
-        
-        /* Loading */
-        #loading {
-            position: fixed;
-            inset: 0;
-            background: #0a0a0f;
+            color: var(--text-secondary);
+            z-index: 100;
             display: flex;
-            flex-direction: column;
             align-items: center;
-            justify-content: center;
-            z-index: 1000;
+            gap: 12px;
         }
         
-        .loader {
-            width: 60px; height: 60px;
-            border: 3px solid #1a1a24;
-            border-top-color: #00ff88;
-            border-radius: 50%;
-            animation: spin 1s linear infinite;
+        .edu-tooltip .icon {
+            font-size: 20px;
         }
         
-        @keyframes spin {
-            to { transform: rotate(360deg); }
-        }
-        
-        .loader-text {
-            margin-top: 16px;
-            font-size: 14px;
-            color: #444;
-        }
-        
-        /* AR Notice */
-        .ar-notice {
+        /* VR Controllers Help */
+        .vr-help {
             position: fixed;
-            top: 50%; left: 50%;
-            transform: translate(-50%, -50%);
-            background: rgba(0,20,10,0.95);
-            border: 2px solid #00ff88;
-            padding: 20px 40px;
-            border-radius: 12px;
-            font-size: 14px;
-            color: #00ff88;
-            display: none;
-            z-index: 200;
+            bottom: 80px;
+            left: 20px;
+            background: var(--bg-panel);
+            border: 1px solid #2a2a35;
+            border-radius: 8px;
+            padding: 12px 16px;
+            font-size: 11px;
+            z-index: 100;
         }
         
-        .ar-notice.show { display: block; }
+        .vr-help h4 {
+            font-size: 11px;
+            color: var(--accent-pink);
+            margin-bottom: 8px;
+        }
+        
+        .vr-help p {
+            color: var(--text-secondary);
+            margin-bottom: 4px;
+        }
+        
+        /* Hide panels based on active table */
+        .panel-hidden { display: none !important; }
+        
+        /* Performance notes */
+        .perf-note {
+            font-size: 10px;
+            color: #555;
+            margin-top: 8px;
+        }
+        
+        /* Custom scrollbar */
+        ::-webkit-scrollbar { width: 6px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: #333; border-radius: 3px; }
     </style>
 </head>
 <body>
-    <div id="loading">
-        <div class="loader"></div>
-        <div class="loader-text">Building Electronics Lab...</div>
-    </div>
-    
     <canvas id="canvas"></canvas>
     
-    <!-- Top Bar -->
-    <div class="top-bar">
-        <div class="logo">⚡ ELECTRONICS LAB</div>
-        <div class="mode-indicator">
-            <span class="mode-dot active" id="modeDot"></span>
-            <span id="modeText">Interactive Mode</span>
+    <!-- Header -->
+    <div class="header">
+        <div class="logo">⚡ Virtual Electronics & RF Lab</div>
+        <button class="vr-button" id="vr-btn">Enter VR</button>
+    </div>
+    
+    <!-- Navigation Tabs -->
+    <div class="nav-tabs">
+        <button class="nav-tab active" data-table="1">Table 1: Components</button>
+        <button class="nav-tab" data-table="2">Table 2: RC Circuit</button>
+        <button class="nav-tab" data-table="3">Table 3: Yagi Antenna</button>
+    </div>
+    
+    <!-- Table 1: Components & Instruments -->
+    <div class="panel component-panel" id="panel-table1">
+        <div class="panel-title">Electronic Components</div>
+        <div class="component-list">
+            <div class="component-item" draggable="true" data-component="cro">
+                <div class="icon">📊</div>
+                <div class="name">CRO</div>
+                <div class="desc">Cathode Ray Oscilloscope</div>
+            </div>
+            <div class="component-item" draggable="true" data-component="afo">
+                <div class="icon">🎵</div>
+                <div class="name">AFO</div>
+                <div class="desc">Audio Frequency Oscillator</div>
+            </div>
+            <div class="component-item" draggable="true" data-component="spectrum">
+                <div class="icon">📈</div>
+                <div class="name">Spectrum</div>
+                <div class="desc">Spectrum Analyzer</div>
+            </div>
+            <div class="component-item" draggable="true" data-component="antenna">
+                <div class="icon">📡</div>
+                <div class="name">Antenna</div>
+                <div class="desc">RF Antenna</div>
+            </div>
+            <div class="component-item" draggable="true" data-component="radar">
+                <div class="icon">🛰️</div>
+                <div class="name">Radar</div>
+                <div class="desc">Radar Module</div>
+            </div>
+            <div class="component-item" draggable="true" data-component="resistor">
+                <div class="icon">⚡</div>
+                <div class="name">Resistor</div>
+                <div class="desc">10KΩ</div>
+            </div>
+            <div class="component-item" draggable="true" data-component="capacitor">
+                <div class="icon">🔋</div>
+                <div class="name">Capacitor</div>
+                <div class="desc">1µF</div>
+            </div>
+            <div class="component-item" draggable="true" data-component="inductor">
+                <div class="icon">🧲</div>
+                <div class="name">Inductor</div>
+                <div class="desc">10mH</div>
+            </div>
+            <div class="component-item" draggable="true" data-component="relay">
+                <div class="icon">🔌</div>
+                <div class="name">Relay</div>
+                <div class="desc">5V SPDT</div>
+            </div>
+            <div class="component-item" draggable="true" data-component="sensor">
+                <div class="icon">🌡️</div>
+                <div class="name">Sensor</div>
+                <div class="desc">Temp/Light</div>
+            </div>
+            <div class="component-item" draggable="true" data-component="led">
+                <div class="icon">💡</div>
+                <div class="name">LED</div>
+                <div class="desc">Red/Green</div>
+            </div>
+            <div class="component-item" draggable="true" data-component="lcd">
+                <div class="icon">🖥️</div>
+                <div class="name">LCD 16x2</div>
+                <div class="desc">Display Module</div>
+            </div>
         </div>
     </div>
     
-    <!-- Component Panel -->
-    <div class="panel component-panel">
-        <div class="panel-title">Components</div>
+    <!-- Table 1: Info Panel -->
+    <div class="panel info-panel" id="info-table1">
+        <div class="panel-title">Component Details</div>
+        <div class="info-section">
+            <h4>📊 CRO - Cathode Ray Oscilloscope</h4>
+            <p>Displays voltage signals as waveforms. Essential for observing circuit behavior, measuring frequency, amplitude, and phase.</p>
+        </div>
+        <div class="param-grid">
+            <div class="param-item">
+                <div class="label">Bandwidth</div>
+                <div class="value">20 MHz</div>
+            </div>
+            <div class="param-item">
+                <div class="label">Channels</div>
+                <div class="value">2</div>
+            </div>
+            <div class="param-item">
+                <div class="label">Sensitivity</div>
+                <div class="value">1mV/div</div>
+            </div>
+            <div class="param-item">
+                <div class="label">Time Base</div>
+                <div class="value">1ns-1s</div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Table 1: CRO Display -->
+    <div class="panel cro-panel" id="cro-table1">
+        <div class="panel-title">CRO Display - Channel 1</div>
+        <canvas id="cro-canvas"></canvas>
+    </div>
+    
+    <!-- Table 2: RC Circuit Simulation -->
+    <div class="panel circuit-panel panel-hidden" id="panel-table2">
+        <div class="panel-title">RC Circuit Simulation</div>
         
-        <div class="component-item" data-type="R" draggable="true">
-            <div class="component-icon R">⚡</div>
-            <div class="component-info">
-                <div class="component-name">Resistor</div>
-                <div class="component-value">10 KΩ</div>
+        <div class="circuit-type-tabs">
+            <button class="circuit-type-tab active" data-circuit="lowpass">Low-Pass</button>
+            <button class="circuit-type-tab" data-circuit="highpass">High-Pass</button>
+            <button class="circuit-type-tab" data-circuit="charging">Charge/Discharge</button>
+        </div>
+        
+        <div class="slider-group">
+            <label>
+                <span>Resistance (R)</span>
+                <span id="r-value">10KΩ</span>
+            </label>
+            <input type="range" id="resistor-slider" min="1" max="100" value="10">
+        </div>
+        
+        <div class="slider-group">
+            <label>
+                <span>Capacitance (C)</span>
+                <span id="c-value">1µF</span>
+            </label>
+            <input type="range" id="capacitor-slider" min="1" max="100" value="1">
+        </div>
+        
+        <div class="formula-box" id="formula-display">
+            τ = R × C = 10ms<br>
+            f<sub>c</sub> = 15.9 Hz
+        </div>
+        
+        <div class="graph-container">
+            <canvas id="circuit-canvas"></canvas>
+        </div>
+        
+        <div class="param-grid" style="margin-top: 12px;">
+            <div class="param-item">
+                <div class="label">Time Constant (τ)</div>
+                <div class="value" id="tau-value">10 ms</div>
+            </div>
+            <div class="param-item">
+                <div class="label">Cutoff Freq (fc)</div>
+                <div class="value" id="fc-value">15.9 Hz</div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Table 3: Yagi-Uda Antenna -->
+    <div class="panel antenna-panel panel-hidden" id="panel-table3">
+        <div class="panel-title">Yagi-Uda Antenna Experiment</div>
+        
+        <div class="antenna-controls">
+            <div class="control-group">
+                <label>Frequency (MHz)</label>
+                <select id="freq-select">
+                    <option value="144">144 MHz (2m band)</option>
+                    <option value="435">435 MHz (70cm band)</option>
+                    <option value="1296">1296 MHz (23cm band)</option>
+                </select>
+            </div>
+            <div class="control-group">
+                <label>Elements</label>
+                <select id="elements-select">
+                    <option value="3">3 Element</option>
+                    <option value="5" selected>5 Element</option>
+                    <option value="7">7 Element</option>
+                </select>
             </div>
         </div>
         
-        <div class="component-item" data-type="C" draggable="true">
-            <div class="component-icon C">🔋</div>
-            <div class="component-info">
-                <div class="component-name">Capacitor</div>
-                <div class="component-value">1 µF</div>
+        <div class="radiation-display">
+            <canvas id="antenna-canvas"></canvas>
+        </div>
+        
+        <div class="antenna-stats">
+            <div class="stat-item">
+                <div class="label">Gain</div>
+                <div class="value" id="gain-value">7.5 dBi</div>
+            </div>
+            <div class="stat-item">
+                <div class="label">Directivity</div>
+                <div class="value" id="directivity-value">8.2 dBd</div>
+            </div>
+            <div class="stat-item">
+                <div class="label">Beamwidth</div>
+                <div class="value" id="beamwidth-value">60°</div>
+            </div>
+            <div class="stat-item">
+                <div class="label">F/B Ratio</div>
+                <div class="value" id="fb-value">15 dB</div>
             </div>
         </div>
-        
-        <div class="component-item" data-type="IC" draggable="true">
-            <div class="component-icon IC">🔌</div>
-            <div class="component-info">
-                <div class="component-name">IC 741</div>
-                <div class="component-value">Op-Amp</div>
-            </div>
-        </div>
-        
-        <div class="component-item" data-type="LED" draggable="true">
-            <div class="component-icon LED">💡</div>
-            <div class="component-info">
-                <div class="component-name">LED</div>
-                <div class="component-value">Output</div>
-            </div>
-        </div>
     </div>
     
-    <!-- Circuit Status Panel -->
-    <div class="panel circuit-panel">
-        <div class="panel-title">Circuit Status</div>
-        
-        <div class="circuit-item">
-            <span class="circuit-status" id="status-R"></span>
-            <span class="circuit-label">R1 - Resistor</span>
-            <span class="circuit-value" id="value-R">--</span>
-        </div>
-        
-        <div class="circuit-item">
-            <span class="circuit-status" id="status-C"></span>
-            <span class="circuit-label">C1 - Capacitor</span>
-            <span class="circuit-value" id="value-C">--</span>
-        </div>
-        
-        <div class="circuit-item">
-            <span class="circuit-status" id="status-IC"></span>
-            <span class="circuit-label">U1 - Op-Amp</span>
-            <span class="circuit-value" id="value-IC">--</span>
-        </div>
-        
-        <div class="circuit-item">
-            <span class="circuit-status" id="status-LED"></span>
-            <span class="circuit-label">D1 - LED</span>
-            <span class="circuit-value" id="value-LED">--</span>
-        </div>
+    <!-- Educational Tooltip -->
+    <div class="edu-tooltip" id="edu-tooltip">
+        <div class="icon">💡</div>
+        <div>Select a component to learn more. Drag components to the breadboard area to build circuits.</div>
     </div>
     
-    <!-- CRO Panel -->
-    <div class="panel cro-panel">
-        <div class="panel-title">CRO Output</div>
-        <div class="cro-display">
-            <canvas class="cro-canvas" id="croCanvas"></canvas>
-            <span class="cro-label">OSCILLOSCOPE</span>
-        </div>
+    <!-- VR Help -->
+    <div class="vr-help">
+        <h4>🎮 VR Controls</h4>
+        <p>Trigger: Grab/Select</p>
+        <p>Grip: Grab Object</p>
+        <p>Thumbstick: Teleport</p>
+        <p>A Button: Info Popup</p>
     </div>
-    
-    <!-- Formula Panel -->
-    <div class="panel formula-panel">
-        <div class="panel-title">RC Oscillator</div>
-        
-        <div class="formula-item">
-            <div class="formula-label">Resistor (R)</div>
-            <div class="formula-value" id="formula-R">10 KΩ</div>
-        </div>
-        
-        <div class="formula-item">
-            <div class="formula-label">Capacitor (C)</div>
-            <div class="formula-value" id="formula-C">1 µF</div>
-        </div>
-        
-        <div class="formula-item">
-            <div class="formula-label">Time Constant (τ = R × C)</div>
-            <div class="formula-value" id="formula-tau">10 ms</div>
-            <div class="formula-result" id="result-tau">τ = 10 × 10⁻³</div>
-        </div>
-        
-        <div class="formula-item">
-            <div class="formula-label">Frequency (f = 1 / 2π√6RC)</div>
-            <div class="formula-value" id="formula-freq">26.5 Hz</div>
-            <div class="formula-result" id="result-freq">f ≈ 1 / 2π√6 × 10 × 10⁻³</div>
-        </div>
-    </div>
-    
-    <!-- Controls -->
-    <div class="controls">
-        <button class="btn btn-primary" onclick="resetAll()">🔄 Reset</button>
-        <button class="btn btn-secondary" onclick="calculateCircuit()">🧮 Calculate</button>
-        <button class="btn btn-ar" onclick="enterAR()">🥽 AR Mode</button>
-    </div>
-    
-    <!-- Instructions -->
-    <div class="instructions">
-        Drag components to breadboard • Complete circuit to see oscillator output
-    </div>
-    
-    <!-- AR Notice -->
-    <div class="ar-notice" id="arNotice">🔍 Scanning for surfaces...</div>
 
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
     <script>
-        // ===== INTERACTIVE ELECTRONICS LAB =====
+        // ==================== THREE.JS 3D SCENE ====================
+        let scene, camera, renderer, labTables = [];
+        let currentTable = 1;
+        let selectedComponent = null;
         
-        let scene, camera, renderer, clock;
-        let components = {};
-        let circuit = { R: false, C: false, IC: false, LED: false };
-        let osc = { R: 10, C: 1, tau: 0.01, freq: 26.53 };
-        let raycaster, mouse;
-        let dragging = null;
-        let croCanvas, croCtx;
-        let reticle;
+        // Circuit simulation state
+        let circuitState = {
+            R: 10000,
+            C: 0.000001,
+            type: 'lowpass',
+            t: 0
+        };
         
-        const COLORS = {
-            bg: 0x0a0a0f,
-            primary: 0x00ff88,
-            accent: 0x0088ff,
-            green: 0x00ff00,
-            red: 0xff4444,
-            blue: 0x4466ff,
-            breadboard: 0x0a0a0a,
-            table: 0x15151a
+        // Antenna simulation state
+        let antennaState = {
+            freq: 435,
+            elements: 5,
+            gain: 7.5,
+            directivity: 8.2,
+            beamwidth: 60,
+            fbRatio: 15
+        };
+        
+        // Component data for Table 1
+        const componentData = {
+            cro: {
+                name: 'CRO', icon: '📊',
+                purpose: 'Display voltage waveforms',
+                function: 'Visualize electronic signals over time',
+                params: 'Bandwidth: 20MHz, Channels: 2, Sensitivity: 1mV/div',
+                terminals: 'Channel 1, Channel 2, Ground',
+                description: 'The CRO displays electrical signals as waveforms, allowing you to see voltage changes over time. Essential for debugging circuits, measuring frequency, amplitude, and observing signal relationships.'
+            },
+            afo: {
+                name: 'AFO', icon: '🎵',
+                purpose: 'Generate audio frequency signals',
+                function: 'Signal source for testing amplifiers and filters',
+                params: 'Range: 20Hz-20kHz, Waveforms: Sine/Square/Triangle',
+                terminals: 'Output, Ground',
+                description: 'An Audio Frequency Oscillator generates test signals at various frequencies. Used to test circuits, drive speakers, and analyze frequency response of filters and amplifiers.'
+            },
+            spectrum: {
+                name: 'Spectrum Analyzer', icon: '📈',
+                purpose: 'Display frequency domain',
+                function: 'Show signal composition across frequencies',
+                params: 'Range: 9kHz-22GHz, Resolution: 1Hz',
+                terminals: 'RF Input, Ground',
+                description: 'Shows how a signal\'s energy is distributed across different frequencies. Essential for RF work, identifying harmonics, and analyzing signal purity.'
+            },
+            antenna: {
+                name: 'Antenna', icon: '📡',
+                purpose: 'Transmit/receive RF energy',
+                function: 'Convert electrical signals to electromagnetic waves',
+                params: 'Frequency: Varies, Gain: Varies',
+                terminals: 'Feed Point, Ground Plane',
+                description: 'An antenna converts AC electrical signals into radio waves (transmit) or converts radio waves into AC signals (receive). The Yagi-Uda is a popular directional antenna.'
+            },
+            radar: {
+                name: 'Radar', icon: '🛰️',
+                purpose: 'Detect objects using RF',
+                function: 'Measure distance, speed, angle of targets',
+                params: 'Range: Varies, Accuracy: 1m',
+                terminals: 'Transmit, Receive, Control',
+                description: 'Radio Detection and Ranging uses radio waves to detect and locate objects. Measures time-of-flight to calculate distance, Doppler effect for speed.'
+            },
+            resistor: {
+                name: 'Resistor', icon: '⚡',
+                purpose: 'Limit current flow',
+                function: 'Voltage division, current limiting',
+                params: 'Value: 10KΩ, Power: 1/4W, Tolerance: 5%',
+                terminals: 'Lead 1, Lead 2',
+                description: 'Resistors limit the flow of electrical current. Used to control voltage levels, limit current to LEDs, and divide voltages. Follows Ohm\'s Law: V = IR.'
+            },
+            capacitor: {
+                name: 'Capacitor', icon: '🔋',
+                purpose: 'Store electrical energy',
+                function: 'Coupling, filtering, timing',
+                params: 'Value: 1µF, Voltage: 25V, Type: Ceramic',
+                terminals: 'Lead 1, Lead 2',
+                description: 'Capacitors store energy in an electric field. Used for filtering, timing circuits (with resistors), and coupling AC signals between circuit stages.'
+            },
+            inductor: {
+                name: 'Inductor', icon: '🧲',
+                purpose: 'Store energy in magnetic field',
+                function: 'Choking, filtering, tuning',
+                params: 'Value: 10mH, Current: 100mA',
+                terminals: 'Lead 1, Lead 2',
+                description: 'Inductors store energy in a magnetic field when current flows through them. Opposes changes in current. Used in filters, chokes, and resonant circuits.'
+            },
+            relay: {
+                name: 'Relay', icon: '🔌',
+                purpose: 'Electromechanical switch',
+                function: 'Control high-voltage circuits with low-voltage signals',
+                params: 'Coil: 5V, Contact: 10A SPDT',
+                terminals: 'Coil+, Coil-, NC, NO, Common',
+                description: 'A relay is an electrically operated switch. A small current controls a larger current, providing isolation between control and load circuits.'
+            },
+            sensor: {
+                name: 'Sensor', icon: '🌡️',
+                purpose: 'Convert physical to electrical',
+                function: 'Measure temperature, light, pressure, etc.',
+                params: 'Type: TMP36, Range: -40°C to +150°C',
+                terminals: 'VCC, Output, GND',
+                description: 'Sensors convert physical quantities (temperature, light, pressure) into electrical signals that circuits can measure and process.'
+            },
+            led: {
+                name: 'LED', icon: '💡',
+                purpose: 'Light emission',
+                function: 'Indicator, display',
+                params: 'Color: Red/Green, Forward Current: 20mA',
+                terminals: 'Anode (+), Cathode (-)',
+                description: 'Light Emitting Diodes emit light when forward-biased. Unlike bulbs, they require a current-limiting resistor to prevent burnout.'
+            },
+            lcd: {
+                name: 'LCD 16x2', icon: '🖥️',
+                purpose: 'Alphanumeric display',
+                function: 'Display text information',
+                params: 'Lines: 2, Chars: 16, Backlight: Blue',
+                terminals: 'D4-D7, RS, E, RW, VCC, GND',
+                description: 'Liquid Crystal Displays show text. The 16x2 means 2 lines of 16 characters. Controlled via parallel interface or I2C adapter.'
+            }
         };
         
         function init() {
-            // Scene
+            // Scene setup
             scene = new THREE.Scene();
-            scene.background = new THREE.Color(COLORS.bg);
-            scene.fog = new THREE.Fog(COLORS.bg, 8, 25);
+            scene.background = new THREE.Color(0x0a0a0f);
+            scene.fog = new THREE.Fog(0x0a0a0f, 15, 35);
             
             // Camera
-            camera = new THREE.PerspectiveCamera(65, innerWidth/innerHeight, 0.01, 50);
-            camera.position.set(0, 4, 7);
+            camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 0.1, 100);
+            camera.position.set(0, 8, 12);
+            camera.lookAt(0, 0, 0);
             
             // Renderer
-            renderer = new THREE.WebGLRenderer({ 
-                canvas: document.getElementById('canvas'), 
-                antialias: true,
-                alpha: true 
-            });
-            renderer.setSize(innerWidth, innerHeight);
-            renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
-            renderer.xr.enabled = true;
+            renderer = new THREE.WebGLRenderer({ canvas: document.getElementById('canvas'), antialias: true });
+            renderer.setSize(window.innerWidth, window.innerHeight);
+            renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
             renderer.shadowMap.enabled = true;
             renderer.shadowMap.type = THREE.PCFSoftShadowMap;
             
-            // Check AR support
-            if (navigator.xr) {
-                navigator.xr.isSessionSupported('immersive-ar').then(supported => {
-                    if (!supported) {
-                        document.querySelector('.btn-ar').style.opacity = '0.5';
-                        document.querySelector('.btn-ar').style.pointerEvents = 'none';
-                    }
-                });
-            }
-            
-            // Lights
-            const ambient = new THREE.AmbientLight(0xffffff, 0.4);
-            scene.add(ambient);
+            // Lighting
+            const ambientLight = new THREE.AmbientLight(0x404060, 0.5);
+            scene.add(ambientLight);
             
             const mainLight = new THREE.DirectionalLight(0xffffff, 0.8);
-            mainLight.position.set(5, 10, 5);
+            mainLight.position.set(5, 15, 10);
             mainLight.castShadow = true;
             mainLight.shadow.mapSize.width = 2048;
             mainLight.shadow.mapSize.height = 2048;
             scene.add(mainLight);
             
-            const accentLight = new THREE.PointLight(0x00ff88, 0.3, 15);
-            accentLight.position.set(-3, 3, 2);
-            scene.add(accentLight);
+            const purpleLight = new THREE.PointLight(0x831C91, 0.5, 20);
+            purpleLight.position.set(-5, 5, -5);
+            scene.add(purpleLight);
             
-            // Lab Environment
-            createLab();
-            createMainTable();
-            createBreadboard();
-            createComponents();
-            createCRO();
-            createOscillatorTable();
+            const pinkLight = new THREE.PointLight(0xFF70BF, 0.3, 15);
+            pinkLight.position.set(5, 3, 5);
+            scene.add(pinkLight);
             
-            // Interactions
-            raycaster = new THREE.Raycaster();
-            mouse = new THREE.Vector2();
+            // Floor grid
+            const gridHelper = new THREE.GridHelper(30, 30, 0x2a2a35, 0x1a1a25);
+            scene.add(gridHelper);
             
-            setupDragDrop();
-            setupCanvasEvents();
-            
-            // CRO Canvas
-            croCanvas = document.getElementById('croCanvas');
-            croCtx = croCanvas.getContext('2d');
-            croCanvas.width = 300;
-            croCanvas.height = 130;
-            
-            clock = new THREE.Clock();
-            renderer.setAnimationLoop(animate);
-            
-            // Hide loading
-            setTimeout(() => {
-                document.getElementById('loading').style.display = 'none';
-            }, 1500);
-        }
-        
-        function createLab() {
-            // Floor
-            const floor = new THREE.Mesh(
-                new THREE.PlaneGeometry(15, 15),
-                new THREE.MeshStandardMaterial({ color: 0x080810, roughness: 0.9 })
-            );
-            floor.rotation.x = -Math.PI/2;
+            // Floor plane
+            const floorGeometry = new THREE.PlaneGeometry(30, 30);
+            const floorMaterial = new THREE.MeshStandardMaterial({
+                color: 0x0a0a0f,
+                roughness: 0.9,
+                metalness: 0.1
+            });
+            const floor = new THREE.Mesh(floorGeometry, floorMaterial);
+            floor.rotation.x = -Math.PI / 2;
             floor.receiveShadow = true;
-            floor.name = 'floor';
             scene.add(floor);
             
-            // Grid
-            const grid = new THREE.GridHelper(15, 40, 0x1a1a24, 0x101018);
-            scene.add(grid);
+            // Create lab tables
+            createLabTable(0, 0, 0, 1);
+            createLabTable(-8, 0, 0, 2);
+            createLabTable(8, 0, 0, 3);
             
-            // Back panel
-            const panel = new THREE.Mesh(
-                new THREE.PlaneGeometry(10, 3),
-                new THREE.MeshStandardMaterial({ color: 0x0c0c12 })
-            );
-            panel.position.set(0, 3, -5);
-            scene.add(panel);
+            // Add 3D components to table 1
+            add3DComponent('cro', -1.5, 1.2, 0);
+            add3DComponent('afo', -0.5, 1.2, 0.8);
+            add3DComponent('resistor', 0.5, 1.2, 0);
+            add3DComponent('capacitor', 1.2, 1.2, 0.5);
             
-            // Title on wall
-            createWallText('⚡ RC OSCILLATOR LAB', 0, 4, -4.9);
+            // Event listeners
+            setupEventListeners();
+            
+            // Start animation
+            animate();
+            
+            // Start CRO animation
+            animateCRO();
+            
+            // Start circuit simulation
+            animateCircuit();
+            
+            // Start antenna visualization
+            animateAntenna();
         }
         
-        function createWallText(text, x, y, z) {
-            const canvas = document.createElement('canvas');
-            canvas.width = 512; canvas.height = 128;
-            const ctx = canvas.getContext('2d');
-            ctx.fillStyle = '#0c0c12';
-            ctx.fillRect(0, 0, 512, 128);
-            ctx.font = 'bold 36px JetBrains Mono';
-            ctx.fillStyle = '#00ff88';
-            ctx.textAlign = 'center';
-            ctx.fillText(text, 256, 75);
+        function createLabTable(x, y, z, tableNum) {
+            const tableGroup = new THREE.Group();
             
-            const texture = new THREE.CanvasTexture(canvas);
-            const mat = new THREE.MeshBasicMaterial({ map: texture, transparent: true });
-            const mesh = new THREE.Mesh(new THREE.PlaneGeometry(6, 1.5), mat);
-            mesh.position.set(x, y, z);
-            scene.add(mesh);
-        }
-        
-        function createMainTable() {
             // Table top
-            const table = new THREE.Mesh(
-                new THREE.BoxGeometry(5, 0.08, 2.5),
-                new THREE.MeshStandardMaterial({ color: COLORS.table, roughness: 0.3, metalness: 0.2 })
-            );
-            table.position.set(0, 1, 0);
-            table.castShadow = true;
-            table.receiveShadow = true;
-            scene.add(table);
+            const topGeometry = new THREE.BoxGeometry(4, 0.15, 3);
+            const topMaterial = new THREE.MeshStandardMaterial({
+                color: 0x1a1a25,
+                roughness: 0.3,
+                metalness: 0.7
+            });
+            const tableTop = new THREE.Mesh(topGeometry, topMaterial);
+            tableTop.position.y = 1;
+            tableTop.castShadow = true;
+            tableTop.receiveShadow = true;
+            tableGroup.add(tableTop);
             
-            // Table legs
-            const legGeo = new THREE.CylinderGeometry(0.04, 0.04, 1, 8);
-            const legMat = new THREE.MeshStandardMaterial({ color: 0x2a2a2a, metalness: 0.5 });
-            
-            [[-2.2, -1], [2.2, -1], [-2.2, 1], [2.2, 1]].forEach(([x, z]) => {
-                const leg = new THREE.Mesh(legGeo, legMat);
-                leg.position.set(x, 0.5, z);
-                scene.add(leg);
+            // Legs
+            const legGeometry = new THREE.CylinderGeometry(0.08, 0.08, 1, 8);
+            const legMaterial = new THREE.MeshStandardMaterial({
+                color: 0x2a2a35,
+                roughness: 0.5,
+                metalness: 0.8
             });
             
-            // Edge strip
-            const strip = new THREE.Mesh(
-                new THREE.BoxGeometry(5.1, 0.015, 0.05),
-                new THREE.MeshStandardMaterial({ 
-                    color: COLORS.primary, 
-                    emissive: COLORS.primary, 
-                    emissiveIntensity: 0.5 
-                })
-            );
-            strip.position.set(0, 1.05, 1.23);
-            scene.add(strip);
-        }
-        
-        function createBreadboard() {
-            const bb = new THREE.Group();
-            bb.name = 'breadboard';
+            const legPositions = [
+                [-1.8, 0.5, -1.3],
+                [1.8, 0.5, -1.3],
+                [-1.8, 0.5, 1.3],
+                [1.8, 0.5, 1.3]
+            ];
             
-            // Main body
-            const body = new THREE.Mesh(
-                new THREE.BoxGeometry(2, 0.1, 1),
-                new THREE.MeshStandardMaterial({ color: COLORS.breadboard })
-            );
-            bb.add(body);
-            
-            // Power rails
-            const redRail = new THREE.Mesh(
-                new THREE.BoxGeometry(1.8, 0.04, 0.04),
-                new THREE.MeshStandardMaterial({ color: 0xff3333, emissive: 0xff3333, emissiveIntensity: 0.3 })
-            );
-            redRail.position.set(0, 0.08, 0.4);
-            bb.add(redRail);
-            
-            const blueRail = new THREE.Mesh(
-                new THREE.BoxGeometry(1.8, 0.04, 0.04),
-                new THREE.MeshStandardMaterial({ color: 0x3333ff, emissive: 0x3333ff, emissiveIntensity: 0.3 })
-            );
-            blueRail.position.set(0, 0.08, -0.4);
-            bb.add(blueRail);
-            
-            // Socket holes
-            const holeMat = new THREE.MeshBasicMaterial({ color: 0x050505 });
-            for (let row = 0; row < 8; row++) {
-                for (let col = 0; col < 4; col++) {
-                    const hole = new THREE.Mesh(
-                        new THREE.CircleGeometry(0.015, 8),
-                        holeMat
-                    );
-                    hole.rotation.x = -Math.PI/2;
-                    hole.position.set(-0.8 + col * 0.2, 0.06, -0.35 + row * 0.1);
-                    bb.add(hole);
-                }
-            }
-            
-            // Center divider
-            const divider = new THREE.Mesh(
-                new THREE.BoxGeometry(0.06, 0.08, 0.9),
-                new THREE.MeshStandardMaterial({ color: 0x1a1a1a })
-            );
-            bb.add(divider);
-            
-            // Label
-            const labelCanvas = document.createElement('canvas');
-            labelCanvas.width = 256; labelCanvas.height = 32;
-            const ctx = labelCanvas.getContext('2d');
-            ctx.fillStyle = '#1a1a1a';
-            ctx.fillRect(0, 0, 256, 32);
-            ctx.font = 'bold 16px JetBrains Mono';
-            ctx.fillStyle = '#666';
-            ctx.fillText('BREADBOARD', 128, 22);
-            
-            const labelTex = new THREE.CanvasTexture(labelCanvas);
-            const label = new THREE.Mesh(
-                new THREE.PlaneGeometry(1.2, 0.15),
-                new THREE.MeshBasicMaterial({ map: labelTex, transparent: true })
-            );
-            label.position.set(0, -0.02, 0);
-            label.rotation.x = -Math.PI/2;
-            bb.add(label);
-            
-            bb.position.set(0, 1.05, 0);
-            scene.add(bb);
-        }
-        
-        function createComponents() {
-            // Component starting positions on table
-            const positions = {
-                R: new THREE.Vector3(-1.8, 1.15, 0.6),
-                C: new THREE.Vector3(-1.2, 1.15, 0.6),
-                IC: new THREE.Vector3(1.5, 1.15, 0.4),
-                LED: new THREE.Vector3(1.5, 1.15, -0.4)
-            };
-            
-            const snapPositions = {
-                R: new THREE.Vector3(-0.6, 1.11, -0.25),
-                C: new THREE.Vector3(-0.3, 1.11, -0.1),
-                IC: new THREE.Vector3(0, 1.11, 0.1),
-                LED: new THREE.Vector3(0.3, 1.11, 0.25)
-            };
-            
-            // Resistor
-            const R = new THREE.Group();
-            R.userData = { type: 'R', home: positions.R.clone(), snap: snapPositions.R.clone(), placed: false };
-            
-            const rBody = new THREE.Mesh(
-                new THREE.CylinderGeometry(0.06, 0.06, 0.4, 16),
-                new THREE.MeshStandardMaterial({ color: 0x8B4513 })
-            );
-            rBody.rotation.z = Math.PI/2;
-            R.add(rBody);
-            
-            // Color bands
-            [[0x8B4513, -0.15], [COLORS.primary, -0.05], [0x0088ff, 0.05]].forEach(([color, x]) => {
-                const band = new THREE.Mesh(
-                    new THREE.CylinderGeometry(0.065, 0.065, 0.03, 16),
-                    new THREE.MeshStandardMaterial({ color })
-                );
-                band.rotation.z = Math.PI/2;
-                band.position.x = x;
-                R.add(band);
+            legPositions.forEach(pos => {
+                const leg = new THREE.Mesh(legGeometry, legMaterial);
+                leg.position.set(...pos);
+                leg.castShadow = true;
+                tableGroup.add(leg);
             });
             
-            R.position.copy(positions.R);
-            R.name = 'R';
-            components.R = R;
-            scene.add(R);
-            
-            // Capacitor
-            const C = new THREE.Group();
-            C.userData = { type: 'C', home: positions.C.clone(), snap: snapPositions.C.clone(), placed: false };
-            
-            const cBody = new THREE.Mesh(
-                new THREE.CylinderGeometry(0.12, 0.12, 0.25, 16),
-                new THREE.MeshStandardMaterial({ color: 0x4169E1 })
-            );
-            C.add(cBody);
-            
-            const cTop = new THREE.Mesh(
-                new THREE.CylinderGeometry(0.15, 0.15, 0.04, 16),
-                new THREE.MeshStandardMaterial({ color: 0x888 })
-            );
-            cTop.position.y = 0.13;
-            C.add(cTop);
-            
-            C.position.copy(positions.C);
-            C.name = 'C';
-            components.C = C;
-            scene.add(C);
-            
-            // IC 741
-            const IC = new THREE.Group();
-            IC.userData = { type: 'IC', home: positions.IC.clone(), snap: snapPositions.IC.clone(), placed: false };
-            
-            const icBody = new THREE.Mesh(
-                new THREE.BoxGeometry(0.5, 0.08, 0.25),
-                new THREE.MeshStandardMaterial({ color: 0x1a1a1a })
-            );
-            IC.add(icBody);
-            
-            // Pins
-            for (let i = 0; i < 8; i++) {
-                const pin = new THREE.Mesh(
-                    new THREE.BoxGeometry(0.02, 0.05, 0.015),
-                    new THREE.MeshStandardMaterial({ color: 0xaaa })
-                );
-                pin.position.set(-0.2 + i * 0.055, -0.04, 0);
-                IC.add(pin);
-            }
-            
-            // Dot marker
-            const dot = new THREE.Mesh(
-                new THREE.CircleGeometry(0.025, 16),
-                new THREE.MeshBasicMaterial({ color: COLORS.primary })
-            );
-            dot.position.set(0, 0.041, -0.08);
-            IC.add(dot);
-            
-            IC.position.copy(positions.IC);
-            IC.name = 'IC';
-            components.IC = IC;
-            scene.add(IC);
-            
-            // LED
-            const LED = new THREE.Group();
-            LED.userData = { type: 'LED', home: positions.LED.clone(), snap: snapPositions.LED.clone(), placed: false };
-            
-            const ledBody = new THREE.Mesh(
-                new THREE.CylinderGeometry(0.08, 0.08, 0.25, 16),
-                new THREE.MeshStandardMaterial({ color: 0x222, emissive: COLORS.green, emissiveIntensity: 0 })
-            );
-            ledBody.name = 'led-body';
-            LED.add(ledBody);
-            
-            const ledDome = new THREE.Mesh(
-                new THREE.SphereGeometry(0.08, 16, 8, 0, Math.PI*2, 0, Math.PI/2),
-                new THREE.MeshStandardMaterial({ 
-                    color: COLORS.green, 
-                    transparent: true, 
-                    opacity: 0.7,
-                    emissive: COLORS.green, 
-                    emissiveIntensity: 0 
-                })
-            );
-            ledDome.name = 'led-dome';
-            ledDome.position.y = 0.12;
-            LED.add(ledDome);
-            
-            LED.position.copy(positions.LED);
-            LED.name = 'LED';
-            components.LED = LED;
-            scene.add(LED);
-        }
-        
-        function createCRO() {
-            const cro = new THREE.Group();
-            
-            // Body
-            const body = new THREE.Mesh(
-                new THREE.BoxGeometry(1.4, 0.9, 0.12),
-                new THREE.MeshStandardMaterial({ color: 0x15151a })
-            );
-            cro.add(body);
-            
-            // Screen
-            const screen = new THREE.Mesh(
-                new THREE.PlaneGeometry(1.15, 0.7),
-                new THREE.MeshBasicMaterial({ color: 0x000800 })
-            );
-            screen.position.set(0, 0.08, 0.07);
-            screen.name = 'cro-screen';
-            cro.add(screen);
-            
-            // Grid
-            const gridMat = new THREE.LineBasicMaterial({ color: 0x002200, transparent: true, opacity: 0.5 });
-            for (let i = 0; i < 4; i++) {
-                const vLine = new THREE.Line(
-                    new THREE.BufferGeometry().setFromPoints([
-                        new THREE.Vector3(-0.5 + i * 0.25, -0.3, 0),
-                        new THREE.Vector3(-0.5 + i * 0.25, 0.3, 0)
-                    ]),
-                    gridMat
-                );
-                vLine.position.z = 0.08;
-                cro.add(vLine);
-            }
-            for (let i = 0; i < 3; i++) {
-                const hLine = new THREE.Line(
-                    new THREE.BufferGeometry().setFromPoints([
-                        new THREE.Vector3(-0.5, -0.25 + i * 0.25, 0),
-                        new THREE.Vector3(0.5, -0.25 + i * 0.25, 0)
-                    ]),
-                    gridMat
-                );
-                hLine.position.z = 0.08;
-                cro.add(hLine);
-            }
-            
-            // Waveform
-            const wavePts = [];
-            for (let i = 0; i < 60; i++) {
-                wavePts.push(new THREE.Vector3(-0.5 + i * 0.017, 0, 0));
-            }
-            const waveGeo = new THREE.BufferGeometry().setFromPoints(wavePts);
-            const waveMat = new THREE.LineBasicMaterial({ color: COLORS.green });
-            const wave = new THREE.Line(waveGeo, waveMat);
-            wave.position.z = 0.08;
-            wave.name = 'cro-wave';
-            cro.add(wave);
-            
-            // Glow effect
-            const glow = new THREE.PointLight(COLORS.green, 0.2, 1);
-            glow.position.set(0, 0.08, 0.3);
-            cro.add(glow);
-            
-            // Knobs
-            for (let i = 0; i < 3; i++) {
-                const knob = new THREE.Mesh(
-                    new THREE.CylinderGeometry(0.04, 0.04, 0.04, 16),
-                    new THREE.MeshStandardMaterial({ color: 0x333 })
-                );
-                knob.position.set(-0.5 + i * 0.15, -0.35, 0.07);
-                cro.add(knob);
-            }
-            
-            // Label
+            // Table label
             const labelCanvas = document.createElement('canvas');
-            labelCanvas.width = 256; labelCanvas.height = 32;
+            labelCanvas.width = 256;
+            labelCanvas.height = 64;
             const ctx = labelCanvas.getContext('2d');
-            ctx.fillStyle = '#1a1a1a';
-            ctx.fillRect(0, 0, 256, 32);
-            ctx.font = 'bold 14px JetBrains Mono';
-            ctx.fillStyle = '#00ff00';
-            ctx.fillText('OSCILLOSCOPE', 128, 22);
+            ctx.fillStyle = '#831C91';
+            ctx.fillRect(0, 0, 256, 64);
+            ctx.fillStyle = '#FF70BF';
+            ctx.font = 'bold 24px JetBrains Mono';
+            ctx.textAlign = 'center';
+            ctx.fillText(`TABLE ${tableNum}`, 128, 40);
             
-            const labelTex = new THREE.CanvasTexture(labelCanvas);
-            const label = new THREE.Mesh(
-                new THREE.PlaneGeometry(0.8, 0.1),
-                new THREE.MeshBasicMaterial({ map: labelTex, transparent: true })
-            );
-            label.position.set(0, -0.38, 0.07);
-            cro.add(label);
+            const labelTexture = new THREE.CanvasTexture(labelCanvas);
+            const labelGeometry = new THREE.PlaneGeometry(2, 0.5);
+            const labelMaterial = new THREE.MeshBasicMaterial({ map: labelTexture, transparent: true });
+            const label = new THREE.Mesh(labelGeometry, labelMaterial);
+            label.position.set(0, 1.5, -1.4);
+            label.rotation.x = -0.3;
+            tableGroup.add(label);
             
-            cro.position.set(1.8, 1.5, -0.5);
-            cro.rotation.x = -0.15;
-            cro.name = 'cro';
-            scene.add(cro);
+            tableGroup.position.set(x, y, z);
+            scene.add(tableGroup);
+            labTables.push(tableGroup);
         }
         
-        function createOscillatorTable() {
-            // Second table for sample oscillator
-            const table = new THREE.Mesh(
-                new THREE.BoxGeometry(1.8, 0.06, 1.2),
-                new THREE.MeshStandardMaterial({ color: 0x101015 })
-            );
-            table.position.set(-2, 1, -0.8);
-            scene.add(table);
+        function add3DComponent(type, x, y, z) {
+            let geometry, material, mesh;
             
-            // Circuit diagram on table
-            const canvas = document.createElement('canvas');
-            canvas.width = 400; canvas.height = 300;
+            const colors = {
+                cro: 0x1a1a25,
+                afo: 0x2a2a35,
+                resistor: 0xd552a3,
+                capacitor: 0x462c7d,
+                led: 0xff0000
+            };
+            
+            const color = colors[type] || 0x831c91;
+            
+            switch(type) {
+                case 'cro':
+                case 'afo':
+                    geometry = new THREE.BoxGeometry(0.8, 0.4, 0.6);
+                    break;
+                case 'resistor':
+                    geometry = new THREE.CylinderGeometry(0.05, 0.05, 0.4, 8);
+                    break;
+                case 'capacitor':
+                    geometry = new THREE.CylinderGeometry(0.08, 0.08, 0.2, 16);
+                    break;
+                case 'led':
+                    geometry = new THREE.SphereGeometry(0.08, 16, 16);
+                    break;
+                default:
+                    geometry = new THREE.BoxGeometry(0.3, 0.3, 0.3);
+            }
+            
+            material = new THREE.MeshStandardMaterial({
+                color: color,
+                roughness: 0.4,
+                metalness: 0.6
+            });
+            
+            mesh = new THREE.Mesh(geometry, material);
+            mesh.position.set(x, y, z);
+            mesh.castShadow = true;
+            mesh.userData.type = type;
+            scene.add(mesh);
+            return mesh;
+        }
+        
+        // ==================== EVENT LISTENERS ====================
+        function setupEventListeners() {
+            // Navigation tabs
+            document.querySelectorAll('.nav-tab').forEach(tab => {
+                tab.addEventListener('click', () => {
+                    document.querySelectorAll('.nav-tab').forEach(t => t.classList.remove('active'));
+                    tab.classList.add('active');
+                    currentTable = parseInt(tab.dataset.table);
+                    updateTableView();
+                });
+            });
+            
+            // Component items - click for info
+            document.querySelectorAll('.component-item').forEach(item => {
+                item.addEventListener('click', () => {
+                    const compType = item.dataset.component;
+                    showComponentInfo(compType);
+                });
+            });
+            
+            // Circuit type tabs
+            document.querySelectorAll('.circuit-type-tab').forEach(tab => {
+                tab.addEventListener('click', () => {
+                    document.querySelectorAll('.circuit-type-tab').forEach(t => t.classList.remove('active'));
+                    tab.classList.add('active');
+                    circuitState.type = tab.dataset.circuit;
+                    updateCircuitCalculation();
+                });
+            });
+            
+            // Sliders
+            document.getElementById('resistor-slider').addEventListener('input', (e) => {
+                circuitState.R = e.target.value * 1000;
+                document.getElementById('r-value').textContent = `${e.target.value}KΩ`;
+                updateCircuitCalculation();
+            });
+            
+            document.getElementById('capacitor-slider').addEventListener('input', (e) => {
+                circuitState.C = e.target.value * 0.000001;
+                const cDisplay = e.target.value + 'µF';
+                document.getElementById('c-value').textContent = cDisplay;
+                updateCircuitCalculation();
+            });
+            
+            // Antenna controls
+            document.getElementById('freq-select').addEventListener('change', (e) => {
+                antennaState.freq = parseInt(e.target.value);
+                updateAntennaCalculation();
+            });
+            
+            document.getElementById('elements-select').addEventListener('change', (e) => {
+                antennaState.elements = parseInt(e.target.value);
+                updateAntennaCalculation();
+            });
+            
+            // VR Button
+            document.getElementById('vr-btn').addEventListener('click', enterVR);
+            
+            // Window resize
+            window.addEventListener('resize', onWindowResize);
+            
+            // Mouse controls
+            setupMouseControls();
+        }
+        
+        function updateTableView() {
+            const panelTable1 = document.getElementById('panel-table1');
+            const infoTable1 = document.getElementById('info-table1');
+            const croTable1 = document.getElementById('cro-table1');
+            const panelTable2 = document.getElementById('panel-table2');
+            const panelTable3 = document.getElementById('panel-table3');
+            
+            if (currentTable === 1) {
+                panelTable1.classList.remove('panel-hidden');
+                infoTable1.classList.remove('panel-hidden');
+                croTable1.classList.remove('panel-hidden');
+                panelTable2.classList.add('panel-hidden');
+                panelTable3.classList.add('panel-hidden');
+                camera.position.set(0, 8, 12);
+            } else if (currentTable === 2) {
+                panelTable1.classList.add('panel-hidden');
+                infoTable1.classList.add('panel-hidden');
+                croTable1.classList.add('panel-hidden');
+                panelTable2.classList.remove('panel-hidden');
+                panelTable3.classList.add('panel-hidden');
+                camera.position.set(-8, 8, 12);
+            } else if (currentTable === 3) {
+                panelTable1.classList.add('panel-hidden');
+                infoTable1.classList.add('panel-hidden');
+                croTable1.classList.add('panel-hidden');
+                panelTable2.classList.add('panel-hidden');
+                panelTable3.classList.remove('panel-hidden');
+                camera.position.set(8, 8, 12);
+            }
+            
+            camera.lookAt(labTables[currentTable - 1].position);
+        }
+        
+        function showComponentInfo(type) {
+            const data = componentData[type];
+            if (!data) return;
+            
+            document.querySelector('#info-table1 .panel-title').textContent = data.name;
+            document.querySelector('#info-table1 .info-section h4').textContent = `${data.icon} ${data.name} - ${data.purpose}`;
+            document.querySelector('#info-table1 .info-section p').textContent = data.description;
+            
+            // Update params
+            const params = data.params.split(', ');
+            const paramsGrid = document.querySelector('#info-table1 .param-grid');
+            paramsGrid.innerHTML = '';
+            params.forEach(p => {
+                const [key, val] = p.split(': ');
+                paramsGrid.innerHTML += `
+                    <div class="param-item">
+                        <div class="label">${key}</div>
+                        <div class="value">${val}</div>
+                    </div>
+                `;
+            });
+            
+            // Update tooltip
+            document.querySelector('#edu-tooltip .icon').textContent = data.icon;
+            document.querySelector('#edu-tooltip div:last-child').textContent = data.description;
+        }
+        
+        function updateCircuitCalculation() {
+            const tau = circuitState.R * circuitState.C;
+            const fc = 1 / (2 * Math.PI * circuitState.R * circuitState.C);
+            
+            document.getElementById('tau-value').textContent = `${(tau * 1000).toFixed(1)} ms`;
+            document.getElementById('fc-value').textContent = `${fc.toFixed(1)} Hz`;
+            
+            let formula = '';
+            if (circuitState.type === 'lowpass') {
+                formula = `τ = R × C = ${tau.toFixed(4)}s<br>fc = 1/(2πRC) = ${fc.toFixed(1)} Hz`;
+            } else if (circuitState.type === 'highpass') {
+                formula = `fc = 1/(2πRC) = ${fc.toFixed(1)} Hz<br>Vout = Vin × (jωRC/(1+jωRC))`;
+            } else {
+                formula = `τ = ${tau.toFixed(4)}s<br>V(t) = V₀(1-e^(-t/τ))`;
+            }
+            document.getElementById('formula-display').innerHTML = formula;
+        }
+        
+        function updateAntennaCalculation() {
+            const freq = antennaState.freq;
+            const elements = antennaState.elements;
+            
+            // Approximate calculations for Yagi-Uda
+            const wavelength = 300 / freq; // meters
+            const reflectorLength = wavelength * 0.5;
+            const drivenLength = wavelength * 0.5;
+            const directorLength = wavelength * 0.45;
+            const spacing = wavelength * 0.25;
+            
+            // Estimated parameters
+            const gainBase = 3 + (elements * 0.9);
+            antennaState.gain = gainBase;
+            antennaState.directivity = gainBase - 0.3;
+            antennaState.beamwidth = Math.max(20, 90 - (elements * 8));
+            antennaState.fbRatio = 10 + elements;
+            
+            document.getElementById('gain-value').textContent = `${antennaState.gain.toFixed(1)} dBi`;
+            document.getElementById('directivity-value').textContent = `${antennaState.directivity.toFixed(1)} dBd`;
+            document.getElementById('beamwidth-value').textContent = `${antennaState.beamwidth}°`;
+            document.getElementById('fb-value').textContent = `${antennaState.fbRatio} dB`;
+        }
+        
+        // ==================== CRO ANIMATION ====================
+        function animateCRO() {
+            const canvas = document.getElementById('cro-canvas');
             const ctx = canvas.getContext('2d');
+            if (!canvas.width) {
+                canvas.width = canvas.offsetWidth;
+                canvas.height = canvas.offsetHeight;
+            }
             
-            // Background
-            ctx.fillStyle = '#080808';
-            ctx.fillRect(0, 0, 400, 300);
+            const w = canvas.width;
+            const h = canvas.height;
+            const t = Date.now() * 0.001;
+            
+            // Clear
+            ctx.fillStyle = '#0a0a0a';
+            ctx.fillRect(0, 0, w, h);
             
             // Grid
-            ctx.strokeStyle = '#1a1a1a';
+            ctx.strokeStyle = '#1a3a1a';
             ctx.lineWidth = 1;
-            for (let x = 0; x < 400; x += 20) {
-                ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, 300); ctx.stroke();
+            
+            // Vertical lines
+            for (let i = 0; i <= 10; i++) {
+                ctx.beginPath();
+                ctx.moveTo(i * w / 10, 0);
+                ctx.lineTo(i * w / 10, h);
+                ctx.stroke();
             }
-            for (let y = 0; y < 300; y += 20) {
-                ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(400, y); ctx.stroke();
+            
+            // Horizontal lines
+            for (let i = 0; i <= 8; i++) {
+                ctx.beginPath();
+                ctx.moveTo(0, i * h / 8);
+                ctx.lineTo(w, i * h / 8);
+                ctx.stroke();
             }
             
-            // Circuit schematic
-            ctx.strokeStyle = '#446688';
-            ctx.lineWidth = 2;
-            
-            // Input section
+            // Center axes
+            ctx.strokeStyle = '#2a4a2a';
+            ctx.lineWidth = 1;
             ctx.beginPath();
-            ctx.moveTo(50, 150); ctx.lineTo(100, 150);
-            ctx.stroke();
-            
-            // Resistor
-            ctx.fillStyle = '#8B4513';
-            ctx.fillRect(100, 140, 20, 20);
-            ctx.fillStyle = '#888';
-            ctx.font = '12px JetBrains Mono';
-            ctx.fillText('R1', 105, 180);
-            
-            // Capacitor
-            ctx.strokeStyle = '#446688';
-            ctx.beginPath();
-            ctx.arc(170, 150, 15, -Math.PI/2, Math.PI/2);
+            ctx.moveTo(w / 2, 0);
+            ctx.lineTo(w / 2, h);
             ctx.stroke();
             ctx.beginPath();
-            ctx.arc(170, 150, 15, Math.PI/2, -Math.PI/2);
-            ctx.stroke();
-            ctx.fillStyle = '#888';
-            ctx.fillText('C1', 160, 180);
-            
-            // Op-Amp triangle
-            ctx.fillStyle = '#333';
-            ctx.beginPath();
-            ctx.moveTo(230, 120);
-            ctx.lineTo(230, 180);
-            ctx.lineTo(270, 150);
-            ctx.closePath();
-            ctx.fill();
-            ctx.fillStyle = '#888';
-            ctx.fillText('U1', 235, 200);
-            
-            // Output
-            ctx.strokeStyle = '#00ff00';
-            ctx.beginPath();
-            ctx.moveTo(270, 150); ctx.lineTo(320, 150);
+            ctx.moveTo(0, h / 2);
+            ctx.lineTo(w, h / 2);
             ctx.stroke();
             
-            // Sine wave output
+            // Sine wave
+            const freq = 2;
+            const amp = h * 0.35;
+            const phase = t * 2 * Math.PI;
+            
             ctx.strokeStyle = '#00ff00';
             ctx.lineWidth = 2;
             ctx.beginPath();
-            for (let x = 0; x < 60; x++) {
-                const y = 240 + Math.sin(x * 0.3) * 30;
-                x === 0 ? ctx.moveTo(50 + x * 4, y) : ctx.lineTo(50 + x * 4, y);
+            
+            for (let x = 0; x < w; x++) {
+                const y = h / 2 + Math.sin((x / w) * freq * 2 * Math.PI + phase) * amp;
+                x === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y);
             }
             ctx.stroke();
             
             // Labels
-            ctx.fillStyle = '#00ff88';
-            ctx.font = 'bold 14px JetBrains Mono';
-            ctx.fillText('SAMPLE RC OSCILLATOR', 200, 30);
+            ctx.fillStyle = '#00ff00';
+            ctx.font = '10px JetBrains Mono';
+            ctx.fillText('1V/div', 10, 15);
+            ctx.fillText('1ms/div', w - 45, h - 5);
+            ctx.fillText('f: 2Hz', w - 40, 15);
             
-            ctx.fillStyle = '#666';
-            ctx.font = '11px JetBrains Mono';
-            ctx.fillText('f = 1 / 2π√6RC ≈ 26.5 Hz', 200, 270);
-            ctx.fillText('R = 10KΩ, C = 1µF', 200, 285);
-            
-            const tex = new THREE.CanvasTexture(canvas);
-            const diagram = new THREE.Mesh(
-                new THREE.PlaneGeometry(1.6, 1.1),
-                new THREE.MeshBasicMaterial({ map: tex })
-            );
-            diagram.position.set(-2, 1.04, -0.78);
-            diagram.rotation.x = -Math.PI/2 - 0.2;
-            scene.add(diagram);
+            requestAnimationFrame(animateCRO);
         }
         
-        // ===== DRAG AND DROP =====
-        
-        function setupDragDrop() {
-            const items = document.querySelectorAll('.component-item');
-            
-            items.forEach(item => {
-                item.addEventListener('dragstart', e => {
-                    e.dataTransfer.setData('type', item.dataset.type);
-                });
-                
-                item.addEventListener('click', () => {
-                    const type = item.dataset.type;
-                    if (components[type]) {
-                        const comp = components[type];
-                        if (comp.userData.placed) {
-                            // Return to home
-                            comp.position.copy(comp.userData.home);
-                            comp.userData.placed = false;
-                            circuit[type] = false;
-                            item.classList.remove('placed');
-                            updateCircuitUI();
-                        }
-                    }
-                });
-            });
-        }
-        
-        function setupCanvasEvents() {
-            const canvas = renderer.domElement;
-            
-            canvas.addEventListener('pointerdown', onPointerDown);
-            canvas.addEventListener('pointermove', onPointerMove);
-            canvas.addEventListener('pointerup', onPointerUp);
-            
-            window.addEventListener('resize', onResize);
-        }
-        
-        function onPointerDown(e) {
-            mouse.x = (e.clientX / innerWidth) * 2 - 1;
-            mouse.y = -(e.clientY / innerHeight) * 2 + 1;
-            
-            raycaster.setFromCamera(mouse, camera);
-            const hits = raycaster.intersectObjects(Object.values(components));
-            
-            for (let hit of hits) {
-                let obj = hit.object;
-                while (obj.parent && !obj.userData.type) obj = obj.parent;
-                
-                if (obj.userData.type) {
-                    dragging = obj;
-                    break;
-                }
-            }
-        }
-        
-        function onPointerMove(e) {
-            if (!dragging) return;
-            
-            mouse.x = (e.clientX / innerWidth) * 2 - 1;
-            mouse.y = -(e.clientY / innerHeight) * 2 + 1;
-            
-            raycaster.setFromCamera(mouse, camera);
-            const point = new THREE.Vector3();
-            raycaster.ray.intersectPlane(new THREE.Plane(new THREE.Vector3(0, 1, 0), -1.05), point);
-            
-            dragging.position.x = Math.max(-3, Math.min(3, point.x));
-            dragging.position.z = Math.max(-2, Math.min(2, point.z));
-        }
-        
-        function onPointerUp() {
-            if (!dragging) return;
-            
-            const type = dragging.userData.type;
-            const pos = dragging.position;
-            
-            // Check if on breadboard
-            const onBB = pos.x > -1.2 && pos.x < 1.2 && pos.z > -0.6 && pos.z < 0.6;
-            
-            if (onBB) {
-                // Snap to position
-                dragging.position.copy(dragging.userData.snap);
-                dragging.userData.placed = true;
-                circuit[type] = true;
-                
-                // Update UI
-                document.querySelector(`[data-type="${type}"]`).classList.add('placed');
-            } else {
-                // Return home
-                dragging.position.copy(dragging.userData.home);
-                dragging.userData.placed = false;
-                circuit[type] = false;
-                
-                document.querySelector(`[data-type="${type}"]`).classList.remove('placed');
+        // ==================== CIRCUIT GRAPH ANIMATION ====================
+        function animateCircuit() {
+            const canvas = document.getElementById('circuit-canvas');
+            const ctx = canvas.getContext('2d');
+            if (!canvas.width) {
+                canvas.width = canvas.offsetWidth;
+                canvas.height = canvas.offsetHeight;
             }
             
-            updateCircuitUI();
-            calculateCircuit();
-            dragging = null;
-        }
-        
-        function updateCircuitUI() {
-            ['R', 'C', 'IC', 'LED'].forEach(type => {
-                const status = document.getElementById(`status-${type}`);
-                const value = document.getElementById(`value-${type}`);
-                
-                if (circuit[type]) {
-                    status.classList.add('connected');
-                    const values = { R: '10KΩ', C: '1µF', IC: 'Installed', LED: 'Active' };
-                    value.textContent = values[type];
-                } else {
-                    status.classList.remove('connected');
-                    value.textContent = '--';
-                }
-            });
-        }
-        
-        function calculateCircuit() {
-            if (circuit.R && circuit.C) {
-                osc.tau = osc.R * osc.C; // ms
-                osc.freq = 1 / (2 * Math.PI * Math.sqrt(6) * osc.R * osc.C);
-                
-                document.getElementById('formula-tau').textContent = osc.tau.toFixed(1) + ' ms';
-                document.getElementById('result-tau').textContent = `τ = ${osc.R} × ${osc.C} × 10⁻³`;
-                
-                document.getElementById('formula-freq').textContent = osc.freq.toFixed(1) + ' Hz';
-                document.getElementById('result-freq').textContent = `f ≈ 1 / 2π√6 × ${osc.R} × 10⁻³`;
-            }
-        }
-        
-        function resetAll() {
-            Object.values(components).forEach(comp => {
-                comp.position.copy(comp.userData.home);
-                comp.userData.placed = false;
-            });
+            const w = canvas.width;
+            const h = canvas.height;
+            const t = Date.now() * 0.001;
             
-            circuit = { R: false, C: false, IC: false, LED: false };
-            
-            document.querySelectorAll('.component-item').forEach(item => {
-                item.classList.remove('placed');
-            });
-            
-            updateCircuitUI();
-        }
-        
-        function onResize() {
-            camera.aspect = innerWidth / innerHeight;
-            camera.updateProjectionMatrix();
-            renderer.setSize(innerWidth, innerHeight);
-        }
-        
-        async function enterAR() {
-            const notice = document.getElementById('arNotice');
-            notice.classList.add('show');
-            
-            if (navigator.xr) {
-                try {
-                    const session = await navigator.xr.requestSession('immersive-ar', {
-                        requiredFeatures: ['local-floor', 'hit-test']
-                    });
-                    renderer.xr.setSession(session);
-                    
-                    document.getElementById('modeText').textContent = 'AR Mode';
-                    document.getElementById('modeDot').style.background = '#0088ff';
-                    document.getElementById('modeDot').style.boxShadow = '0 0 10px #0088ff';
-                    
-                    notice.classList.remove('show');
-                } catch(e) {
-                    console.log('AR not available');
-                    notice.textContent = 'AR not supported on this device';
-                    setTimeout(() => notice.classList.remove('show'), 2000);
-                }
-            }
-        }
-        
-        // ===== ANIMATION LOOP =====
-        
-        function animate() {
-            const t = clock.getElapsedTime();
-            
-            // LED blink when circuit complete
-            if (circuit.R && circuit.C && circuit.LED) {
-                const phase = (t * osc.freq * Math.PI * 2) % (Math.PI * 2);
-                const on = Math.sin(phase) > 0;
-                
-                if (components.LED) {
-                    const body = components.LED.children.find(c => c.name === 'led-body');
-                    const dome = components.LED.children.find(c => c.name === 'led-dome');
-                    if (body) body.material.emissiveIntensity = on ? 0.9 : 0;
-                    if (dome) dome.material.emissiveIntensity = on ? 0.6 : 0;
-                }
-            }
-            
-            // Camera orbit
-            camera.position.x = Math.sin(t * 0.08) * 7;
-            camera.position.z = Math.cos(t * 0.08) * 7;
-            camera.lookAt(0, 1, 0);
-            
-            // Draw CRO
-            drawCRO(t);
-            
-            renderer.render(scene, camera);
-        }
-        
-        function drawCRO(t) {
-            if (!croCtx) return;
-            
-            const w = croCanvas.width;
-            const h = croCanvas.height;
-            
-            // Background
-            croCtx.fillStyle = '#000800';
-            croCtx.fillRect(0, 0, w, h);
+            // Clear
+            ctx.fillStyle = '#0a0a0a';
+            ctx.fillRect(0, 0, w, h);
             
             // Grid
-            croCtx.strokeStyle = '#001a00';
-            croCtx.lineWidth = 1;
-            for (let i = 0; i < 8; i++) {
-                croCtx.beginPath();
-                croCtx.moveTo(i * w/8, 0);
-                croCtx.lineTo(i * w/8, h);
-                croCtx.stroke();
+            ctx.strokeStyle = '#1a1a25';
+            ctx.lineWidth = 0.5;
+            for (let i = 0; i <= 10; i++) {
+                ctx.beginPath();
+                ctx.moveTo(i * w / 10, 0);
+                ctx.lineTo(i * w / 10, h);
+                ctx.stroke();
             }
-            for (let i = 0; i < 6; i++) {
-                croCtx.beginPath();
-                croCtx.moveTo(0, i * h/6);
-                croCtx.lineTo(w, i * h/6);
-                croCtx.stroke();
+            for (let i = 0; i <= 8; i++) {
+                ctx.beginPath();
+                ctx.moveTo(0, i * h / 8);
+                ctx.lineTo(w, i * h / 8);
+                ctx.stroke();
             }
             
-            // Waveform
-            if (circuit.R && circuit.C) {
-                croCtx.strokeStyle = '#00ff00';
-                croCtx.lineWidth = 2;
-                croCtx.beginPath();
-                
-                const freq = circuit.LED ? 0.15 : 0.05;
+            const tau = circuitState.R * circuitState.C;
+            const fc = 1 / (2 * Math.PI * tau);
+            
+            // Draw response curve
+            ctx.strokeStyle = '#FF70BF';
+            ctx.lineWidth = 2;
+            ctx.beginPath();
+            
+            if (circuitState.type === 'lowpass') {
                 for (let x = 0; x < w; x++) {
-                    const y = h/2 + Math.sin((x/w) * Math.PI * 2 * 5 + t * osc.freq * 0.2) * (h * 0.35);
-                    x === 0 ? croCtx.moveTo(x, y) : croCtx.lineTo(x, y);
+                    const f = (x / w) * (fc * 10);
+                    const response = 1 / Math.sqrt(1 + Math.pow(f / fc, 2));
+                    const y = h - (response * h * 0.9) - 20;
+                    x === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y);
                 }
-                croCtx.stroke();
-                
-                // Frequency label
-                croCtx.fillStyle = '#00ff00';
-                croCtx.font = '11px JetBrains Mono';
-                croCtx.fillText(`f = ${osc.freq.toFixed(1)} Hz`, 10, 20);
+            } else if (circuitState.type === 'highpass') {
+                for (let x = 0; x < w; x++) {
+                    const f = (x / w) * (fc * 10);
+                    const response = (f / fc) / Math.sqrt(1 + Math.pow(f / fc, 2));
+                    const y = h - (response * h * 0.9) - 20;
+                    x === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y);
+                }
             } else {
-                croCtx.fillStyle = '#333';
-                croCtx.font = '12px JetBrains Mono';
-                croCtx.fillText('NO SIGNAL', w/2 - 40, h/2);
+                // Charging curve
+                for (let x = 0; x < w; x++) {
+                    const time = (x / w) * (tau * 6);
+                    const voltage = 1 - Math.exp(-time / tau);
+                    const y = h - (voltage * h * 0.8) - 20;
+                    x === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y);
+                }
             }
+            ctx.stroke();
+            
+            // Cutoff point
+            if (circuitState.type !== 'charging') {
+                const fcX = (1 / (fc * 10)) * w;
+                const fcY = h - (0.707 * h * 0.9) - 20;
+                
+                ctx.fillStyle = '#00ff88';
+                ctx.beginPath();
+                ctx.arc(fcX, fcY, 4, 0, Math.PI * 2);
+                ctx.fill();
+                ctx.font = '10px JetBrains Mono';
+                ctx.fillText(`fc: ${fc.toFixed(1)}Hz`, fcX + 5, fcY);
+            }
+            
+            requestAnimationFrame(animateCircuit);
+        }
+        
+        // ==================== ANTENNA VISUALIZATION ====================
+        function animateAntenna() {
+            const canvas = document.getElementById('antenna-canvas');
+            const ctx = canvas.getContext('2d');
+            if (!canvas.width) {
+                canvas.width = canvas.offsetWidth;
+                canvas.height = canvas.offsetHeight;
+            }
+            
+            const w = canvas.width;
+            const h = canvas.height;
+            const cx = w / 2;
+            const cy = h / 2;
+            const t = Date.now() * 0.001;
+            
+            // Clear
+            ctx.fillStyle = '#0a0a0a';
+            ctx.fillRect(0, 0, w, h);
+            
+            // Grid (polar)
+            ctx.strokeStyle = '#1a1a25';
+            ctx.lineWidth = 0.5;
+            for (let r = 1; r <= 4; r++) {
+                ctx.beginPath();
+                ctx.arc(cx, cy, r * 20, 0, Math.PI * 2);
+                ctx.stroke();
+            }
+            for (let a = 0; a < 12; a++) {
+                const angle = (a / 12) * Math.PI * 2;
+                ctx.beginPath();
+                ctx.moveTo(cx, cy);
+                ctx.lineTo(cx + Math.cos(angle) * 80, cy + Math.sin(angle) * 80);
+                ctx.stroke();
+            }
+            
+            // Antenna element (simple line)
+            ctx.strokeStyle = '#FF70BF';
+            ctx.lineWidth = 3;
+            ctx.beginPath();
+            ctx.moveTo(cx - 30, cy);
+            ctx.lineTo(cx + 30, cy);
+            ctx.stroke();
+            
+            // Directors
+            const elements = antennaState.elements;
+            const spacing = 15;
+            for (let i = 1; i < elements; i++) {
+                const x = cx + 30 + (i * spacing);
+                ctx.strokeStyle = '#831C91';
+                ctx.lineWidth = 2;
+                ctx.beginPath();
+                ctx.moveTo(x - 10, cy - 15);
+                ctx.lineTo(x + 10, cy + 15);
+                ctx.stroke();
+            }
+            
+            // Reflector
+            ctx.strokeStyle = '#D552A3';
+            ctx.lineWidth = 3;
+            ctx.beginPath();
+            ctx.moveTo(cx - 40, cy - 20);
+            ctx.lineTo(cx - 40, cy + 20);
+            ctx.stroke();
+            
+            // Radiation pattern (polar)
+            const beamwidth = antennaState.beamwidth;
+            const gain = antennaState.gain;
+            
+            ctx.strokeStyle = '#00ff88';
+            ctx.lineWidth = 2;
+            ctx.beginPath();
+            
+            for (let angle = -Math.PI; angle <= Math.PI; angle += 0.05) {
+                const spread = Math.exp(-Math.pow(angle / (beamwidth * Math.PI / 180), 2) * 1.5;
+                const r = spread * 40;
+                const x = cx + Math.cos(angle + Math.PI) * r;
+                const y = cy + Math.sin(angle + Math.PI) * r;
+                angle === -Math.PI ? ctx.moveTo(x, y) : ctx.lineTo(x, y);
+            }
+            ctx.closePath();
+            ctx.stroke();
+            
+            // Fill
+            ctx.fillStyle = 'rgba(0, 255, 136, 0.1)';
+            ctx.fill();
+            
+            // Direction label
+            ctx.fillStyle = '#00ff88';
+            ctx.font = '10px JetBrains Mono';
+            ctx.textAlign = 'center';
+            ctx.fillText('MAIN LOBE', cx, cy - 55);
+            ctx.fillText('F/B: ' + antennaState.fbRatio + 'dB', cx, cy + 60);
+            
+            requestAnimationFrame(animateAntenna);
+        }
+        
+        // ==================== MOUSE CONTROLS ====================
+        let isMouseDown = false;
+        let mouseX = 0, mouseY = 0;
+        let cameraAngle = 0, cameraHeight = 8, cameraDistance = 12;
+        
+        function setupMouseControls() {
+            const canvas = document.getElementById('canvas');
+            
+            canvas.addEventListener('mousedown', (e) => {
+                isMouseDown = true;
+                mouseX = e.clientX;
+                mouseY = e.clientY;
+            });
+            
+            canvas.addEventListener('mousemove', (e) => {
+                if (!isMouseDown) return;
+                
+                const dx = e.clientX - mouseX;
+                const dy = e.clientY - mouseY;
+                
+                cameraAngle += dx * 0.01;
+                cameraHeight = Math.max(3, Math.min(15, cameraHeight - dy * 0.05));
+                
+                mouseX = e.clientX;
+                mouseY = e.clientY;
+                
+                updateCameraPosition();
+            });
+            
+            canvas.addEventListener('mouseup', () => {
+                isMouseDown = false;
+            });
+            
+            canvas.addEventListener('wheel', (e) => {
+                cameraDistance = Math.max(5, Math.min(25, cameraDistance + e.deltaY * 0.01));
+                updateCameraPosition();
+            });
+        }
+        
+        function updateCameraPosition() {
+            const tablePos = labTables[currentTable - 1].position;
+            
+            camera.position.x = tablePos.x + Math.sin(cameraAngle) * cameraDistance;
+            camera.position.z = tablePos.z + Math.cos(cameraAngle) * cameraDistance;
+            camera.position.y = cameraHeight;
+            camera.lookAt(tablePos.x, 1, tablePos.z);
+        }
+        
+        // ==================== VR MODE ====================
+        function enterVR() {
+            if (navigator.xr) {
+                navigator.xr.isSessionSupported('immersive-vr').then((supported) => {
+                    if (supported) {
+                        alert('VR Mode: Connect your Quest 2/3 and open this page in the headset browser at the deployed HTTPS URL.');
+                    } else {
+                        alert('VR not supported on this device. Deploy to HTTPS for Quest browser access.');
+                    }
+                });
+            } else {
+                alert('WebXR not available. Deploy to HTTPS URL and open in Quest 3 browser.');
+            }
+        }
+        
+        // ==================== WINDOW RESIZE ====================
+        function onWindowResize() {
+            camera.aspect = window.innerWidth / window.innerHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(window.innerWidth, window.innerHeight);
+        }
+        
+        // ==================== ANIMATION LOOP ====================
+        function animate() {
+            requestAnimationFrame(animate);
+            renderer.render(scene, camera);
         }
         
         // Initialize
         init();
+        updateCircuitCalculation();
+        updateAntennaCalculation();
     </script>
 </body>
 </html>
