@@ -591,6 +591,9 @@
             scn.add(new THREE.PointLight(0x831C91, 0.4, 20));
             scn.add(new THREE.PointLight(0xFF70BF, 0.3, 15));
             
+            // Setup VR controllers
+            setupVRControllers();
+            
             // Grid
             scn.add(new THREE.GridHelper(30, 30, 0x2a2a35, 0x1a1a25));
             const fl = new THREE.Mesh(new THREE.PlaneGeometry(30, 30), new THREE.MeshStandardMaterial({ color: 0x0a0a0f, roughness: 0.9 }));
@@ -1210,16 +1213,19 @@
             if (navigator.xr) {
                 navigator.xr.isSessionSupported('immersive-vr').then(s => {
                     if (s) {
-                        // Try to start VR session
+                        // Try to start VR session with hand tracking
                         navigator.xr.requestSession('immersive-vr', {
-                            optionalFeatures: ['local-floor', 'bounded-floor']
+                            optionalFeatures: ['local-floor', 'bounded-floor', 'hand-tracking']
                         }).then(session => {
                             session.addEventListener('end', () => {
                                 show('VR session ended');
+                                rdr.xr.enabled = false;
                             });
                             rdr.xr.enabled = true;
                             rdr.xr.setSession(session);
-                            show('VR Mode Active - Use Quest controllers');
+                            show('VR Mode Active - Use Quest controllers!');
+                        }).catch(e => {
+                            alert('Could not start VR: ' + e.message);
                         }).catch(e => {
                             alert('Could not start VR: ' + e.message);
                         });
@@ -1270,9 +1276,121 @@
             }
         }
         
+        // ===== VR CONTROLLERS =====
+        let controller1, controller2;
+        let controllerGrip1, controllerGrip2;
+        let vrRaycaster, vrTempMatrix;
+        
+        function setupVRControllers() {
+            // Controller 1 (Right hand)
+            controller1 = rdr.xr.getController(0);
+            controller1.addEventListener('selectstart', onVRSelectStart);
+            controller1.addEventListener('selectend', onVRSelectEnd);
+            controller1.addEventListener('squeezestart', onVRSqueezeStart);
+            controller1.addEventListener('squeezeend', onVRSqueezeEnd);
+            scn.add(controller1);
+            
+            // Controller 2 (Left hand)
+            controller2 = rdr.xr.getController(1);
+            controller2.addEventListener('selectstart', onVRSelectStart);
+            controller2.addEventListener('selectend', onVRSelectEnd);
+            scn.add(controller2);
+            
+            // ControllerGrip 1 - Visual representation
+            controllerGrip1 = new THREE.Group();
+            const gripGeo = new THREE.CylinderGeometry(0.02, 0.02, 0.1, 8);
+            const gripMat = new THREE.MeshStandardMaterial({ color: 0xFF70BF });
+            const gripMesh = new THREE.Mesh(gripGeo, gripMat);
+            gripMesh.rotation.x = -Math.PI / 2;
+            controllerGrip1.add(gripMesh);
+            
+            // Add pointer ray
+            const rayGeo = new THREE.BufferGeometry().setFromPoints([new THREE.Vector3(0, 0, 0), new THREE.Vector3(0, 0, -1)]);
+            const rayMat = new THREE.LineBasicMaterial({ color: 0x00ff88 });
+            const rayLine = new THREE.Line(rayGeo, rayMat);
+            controller1.add(rayLine);
+            
+            scn.add(controllerGrip1);
+            
+            // ControllerGrip 2
+            controllerGrip2 = new THREE.Group();
+            const grip2 = new THREE.Mesh(gripGeo, gripMat);
+            grip2.rotation.x = -Math.PI / 2;
+            controllerGrip2.add(grip2);
+            controller2.add(rayLine.clone());
+            scn.add(controllerGrip2);
+            
+            // Raycaster for VR selection
+            vrRaycaster = new THREE.Raycaster();
+            vrTempMatrix = new THREE.Matrix4();
+            
+            // VR controller text label
+            showVRControllerHelp();
+        }
+        
+        function showVRControllerHelp() {
+            show('VR Controls: Trigger=Select, Grip=Grab, Thumbstick=Teleport');
+        }
+        
+        function onVRSelectStart(event) {
+            const controller = event.target;
+            // Get controller position and direction
+            vrTempMatrix.identity().extractRotation(controller.matrixWorld);
+            vrRaycaster.ray.origin.setFromMatrixPosition(controller.matrixWorld);
+            vrRaycaster.ray.direction.set(0, 0, -1).applyMatrix4(vrTempMatrix);
+            
+            // Check intersection with components
+            const intersects = vrRaycaster.intersectObjects(objs);
+            if (intersects.length > 0) {
+                const hitObj = intersects[0].object;
+                // Highlight selected object
+                if (hitObj.material && hitObj.material.emissive) {
+                    hitObj.userData.originalEmissive = hitObj.material.emissive.getHex();
+                    hitObj.material.emissive.setHex(0x00ff00);
+                }
+                show('Selected: ' + hitObj.userData.t);
+            }
+        }
+        
+        function onVRSelectEnd(event) {
+            const controller = event.target;
+            // Reset highlight
+            objs.forEach(obj => {
+                if (obj.material && obj.material.emissive && obj.userData.originalEmissive !== undefined) {
+                    obj.material.emissive.setHex(obj.userData.originalEmissive);
+                }
+            });
+        }
+        
+        function onVRSqueezeStart(event) {
+            // Grab and move object
+            const controller = event.target;
+            vrTempMatrix.identity().extractRotation(controller.matrixWorld);
+            vrRaycaster.ray.origin.setFromMatrixPosition(controller.matrixWorld);
+            vrRaycaster.ray.direction.set(0, 0, -1).applyMatrix4(vrTempMatrix);
+            
+            const intersects = vrRaycaster.intersectObjects(objs);
+            if (intersects.length > 0) {
+                show('Grabbed: ' + intersects[0].object.userData.t);
+            }
+        }
+        
+        function onVRSqueezeEnd(event) {
+            show('Released');
+        }
+        
         function animate() {
             // For WebXR VR mode, Three.js handles the loop automatically
             if (rdr.xr.isPresenting) {
+                // Update controller grip positions
+                if (controllerGrip1 && controller1) {
+                    controllerGrip1.position.copy(controller1.position);
+                    controllerGrip1.quaternion.copy(controller1.quaternion);
+                }
+                if (controllerGrip2 && controller2) {
+                    controllerGrip2.position.copy(controller2.position);
+                    controllerGrip2.quaternion.copy(controller2.quaternion);
+                }
                 return;
             }
             requestAnimationFrame(animate);
