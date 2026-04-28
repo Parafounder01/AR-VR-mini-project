@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Advanced Electronics Lab - RC/RL/RLC Circuits</title>
+    <title>Complete Electronics Lab - Transistors, Amplifiers & More</title>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600&family=Space+Grotesk:wght@400;600;700&display=swap');
         
@@ -17,8 +17,8 @@
             --text-primary: #e0e0e0;
             --text-secondary: #888;
             --success: #00ff88;
-            --warning: #ffaa00;
             --cyan: #00ddff;
+            --warning: #ffaa00;
         }
         
         * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -36,7 +36,7 @@
         
         .header {
             position: fixed; top: 0; left: 0; right: 0;
-            padding: 12px 20px;
+            padding: 10px 16px;
             background: linear-gradient(180deg, rgba(10,10,15,0.95) 0%, transparent 100%);
             display: flex; justify-content: space-between; align-items: center;
             z-index: 100;
@@ -44,7 +44,7 @@
         
         .logo {
             font-family: 'JetBrains Mono', monospace;
-            font-size: 14px;
+            font-size: 13px;
             font-weight: 600;
             background: linear-gradient(90deg, var(--accent-pink), var(--success));
             -webkit-background-clip: text;
@@ -52,152 +52,129 @@
             background-clip: text;
         }
         
-        .header-btns {
-            display: flex; gap: 8px;
-        }
+        .hdr-btns { display: flex; gap: 6px; }
         
-        .header-btn {
-            padding: 8px 14px;
+        .hdr-btn {
+            padding: 6px 10px;
             background: rgba(255,255,255,0.05);
-            border: 1px solid #2a2a35;
-            border-radius: 6px;
-            color: var(--text-primary);
-            font-size: 11px;
-            cursor: pointer;
-            transition: all 0.2s ease;
-        }
-        
-        .header-btn:hover {
-            border-color: var(--accent-pink);
-            background: rgba(255, 112, 191, 0.15);
-        }
-        
-        .header-btn.vr {
-            background: linear-gradient(135deg, var(--accent-purple), var(--accent-magenta));
-            border: none;
-        }
-        
-        .status-bar { display: flex; gap: 10px; font-size: 9px; }
-        
-        .status-item {
-            display: flex; align-items: center; gap: 5px;
-            padding: 4px 10px;
-            background: rgba(255,255,255,0.05);
-            border-radius: 15px;
-        }
-        
-        .status-dot { width: 5px; height: 5px; border-radius: 50%; background: var(--text-secondary); }
-        .status-dot.on { background: var(--success); box-shadow: 0 0 6px var(--success); }
-        
-        /* Left Panel - Components */
-        .left-panel {
-            position: fixed; left: 12px; top: 60px; width: 85px;
-            background: var(--bg-panel); border: 1px solid #2a2a35;
-            border-radius: 10px; padding: 10px;
-            display: flex; flex-direction: column; gap: 5px;
-            max-height: calc(100vh - 80px); overflow-y: auto;
-        }
-        
-        .panel-label {
-            font-size: 8px; color: var(--text-secondary);
-            text-transform: uppercase; letter-spacing: 1px;
-            text-align: center; margin-bottom: 4px;
-        }
-        
-        .tray-comp {
-            width: 65px; height: 50px;
-            background: rgba(255,255,255,0.03);
             border: 1px solid #2a2a35;
             border-radius: 5px;
+            color: var(--text-primary);
+            font-size: 10px;
+            cursor: pointer;
+        }
+        
+        .hdr-btn.vr { background: linear-gradient(135deg, var(--accent-purple), var(--accent-magenta)); border: none; }
+        
+        .status { display: flex; gap: 8px; font-size: 8px; }
+        
+        .status-item {
+            display: flex; align-items: center; gap: 4px;
+            padding: 3px 8px;
+            background: rgba(255,255,255,0.05);
+            border-radius: 12px;
+        }
+        
+        .dot { width: 4px; height: 4px; border-radius: 50%; background: var(--text-secondary); }
+        .dot.on { background: var(--success); box-shadow: 0 0 5px var(--success); }
+        
+        .left-panel {
+            position: fixed; left: 10px; top: 50px; width: 80px;
+            background: var(--bg-panel); border: 1px solid #2a2a35;
+            border-radius: 8px; padding: 8px;
+            display: flex; flex-direction: column; gap: 4px;
+            max-height: calc(100vh - 70px); overflow-y: auto;
+        }
+        
+        .lbl { font-size: 7px; color: var(--text-secondary); text-transform: uppercase; text-align: center; margin-bottom: 2px; }
+        
+        .tray-item {
+            width: 64px; height: 46px;
+            background: rgba(255,255,255,0.03);
+            border: 1px solid #2a2a35;
+            border-radius: 4px;
             display: flex; flex-direction: column;
             align-items: center; justify-content: center;
-            cursor: grab; transition: all 0.2s ease;
+            cursor: grab; transition: 0.2s;
             user-select: none;
         }
         
-        .tray-comp:hover {
+        .tray-item:hover {
             border-color: var(--accent-pink);
             background: rgba(255, 112, 191, 0.15);
             transform: scale(1.03);
         }
         
-        .tray-comp .icon { font-size: 20px; }
-        .tray-comp .name { font-size: 7px; margin-top: 2px; }
+        .tray-item .ic { font-size: 18px; }
+        .tray-item .nm { font-size: 6px; margin-top: 1px; }
         
-        /* Right Panel - Builder */
         .right-panel {
-            position: fixed; right: 12px; top: 60px; width: 240px;
+            position: fixed; right: 10px; top: 50px; width: 220px;
             background: var(--bg-panel); border: 1px solid #2a2a35;
-            border-radius: 10px; padding: 12px;
-            max-height: calc(100vh - 80px); overflow-y: auto;
+            border-radius: 8px; padding: 10px;
+            max-height: calc(100vh - 70px); overflow-y: auto;
         }
         
-        .section-title {
-            font-size: 9px; color: var(--accent-pink);
+        .sec-title {
+            font-size: 8px; color: var(--accent-pink);
             text-transform: uppercase; letter-spacing: 1px;
-            margin-bottom: 10px;
-            display: flex; align-items: center; gap: 5px;
+            margin-bottom: 8px;
         }
         
-        .section-title::before {
-            content: ''; width: 2px; height: 10px;
-            background: var(--accent-pink); border-radius: 2px;
+        .sec-title::before {
+            content: ''; width: 2px; height: 9px;
+            background: var(--accent-pink); display: inline-block; margin-right: 4px;
+            border-radius: 1px;
         }
         
-        .placed-list {
-            display: flex; flex-direction: column; gap: 4px;
-            margin-bottom: 12px;
-        }
+        .placed { display: flex; flex-direction: column; gap: 3px; margin-bottom: 10px; }
         
         .placed-item {
             display: flex; align-items: center; justify-content: space-between;
-            padding: 6px 8px;
+            padding: 5px 6px;
             background: rgba(255,255,255,0.03);
             border: 1px solid #2a2a35;
-            border-radius: 4px;
-            font-size: 10px;
+            border-radius: 3px;
+            font-size: 9px;
         }
         
         .placed-item .btn-x {
-            width: 18px; height: 18px;
+            width: 16px; height: 16px;
             background: rgba(255, 50, 50, 0.2);
-            border: none; border-radius: 3px;
-            color: #ff6666; cursor: pointer;
-            font-size: 11px; line-height: 1;
+            border: none; border-radius: 2px;
+            color: #ff6666; font-size: 10px;
+            cursor: pointer;
         }
         
-        .circuit-grid {
-            display: grid; grid-template-columns: repeat(2, 1fr); gap: 4px;
-            margin-bottom: 12px;
+        .ckt-grid {
+            display: grid; grid-template-columns: repeat(2, 1fr); gap: 3px;
+            margin-bottom: 10px;
         }
         
-        .circuit-btn {
-            padding: 7px;
+        .ckt-btn {
+            padding: 6px;
             background: transparent;
             border: 1px solid #2a2a35;
-            border-radius: 4px;
+            border-radius: 3px;
             color: var(--text-secondary);
-            font-size: 8px;
-            cursor: pointer; transition: all 0.2s ease;
+            font-size: 7px;
+            cursor: pointer; transition: 0.2s;
         }
         
-        .circuit-btn.active {
+        .ckt-btn.active {
             background: var(--accent-purple);
             border-color: var(--accent-purple);
             color: white;
         }
         
-        .slider-group { margin-bottom: 10px; }
+        .slider { margin-bottom: 8px; }
         
         .slider-row {
             display: flex; justify-content: space-between;
-            font-size: 9px; margin-bottom: 4px;
+            font-size: 8px; margin-bottom: 3px;
         }
         
-        .slider-row .val {
-            font-family: 'JetBrains Mono', monospace;
-            color: var(--success);
-        }
+        .slider-row .v { color: var(--success); font-family: 'JetBrains Mono'; }
         
         input[type="range"] {
             width: 100%; height: 4px;
@@ -208,727 +185,664 @@
         
         input[type="range"]::-webkit-slider-thumb {
             -webkit-appearance: none;
-            width: 12px; height: 12px;
+            width: 10px; height: 10px;
             border-radius: 50%;
             background: linear-gradient(135deg, var(--accent-pink), var(--accent-magenta));
             cursor: pointer;
         }
         
-        .results-box {
+        .results {
             background: rgba(0,0,0,0.3);
-            border-radius: 5px; padding: 8px;
-            margin-bottom: 10px;
+            border-radius: 4px; padding: 6px;
+            margin-bottom: 8px;
         }
         
-        .result-row {
+        .result {
             display: flex; justify-content: space-between;
-            font-size: 9px; margin-bottom: 3px;
+            font-size: 8px; margin-bottom: 2px;
         }
         
-        .result-row .l { color: var(--text-secondary); }
-        .result-row .v {
-            font-family: 'JetBrains Mono', monospace;
-            color: var(--success);
-        }
+        .result .l { color: var(--text-secondary); }
+        .result .v { color: var(--success); font-family: 'JetBrains Mono'; }
         
         .run-btn {
-            width: 100%; padding: 10px;
+            width: 100%; padding: 8px;
             background: linear-gradient(135deg, var(--accent-purple), var(--accent-magenta));
-            border: none; border-radius: 5px;
-            color: white; font-size: 11px;
+            border: none; border-radius: 4px;
+            color: white; font-size: 10px;
             font-weight: 600; cursor: pointer;
-            transition: all 0.3s ease;
+            transition: 0.3s;
         }
         
-        .run-btn:hover {
-            transform: scale(1.01);
-            box-shadow: 0 0 15px rgba(131, 28, 145, 0.4);
-        }
-        
+        .run-btn:hover { transform: scale(1.01); box-shadow: 0 0 12px rgba(131, 28, 145, 0.4); }
         .run-btn:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
         
-        /* Bottom Panel - Meters */
-        .bottom-panel {
-            position: fixed; left: 110px; bottom: 12px;
-            display: flex; gap: 8px;
+        .meters {
+            position: fixed; left: 100px; bottom: 10px;
+            display: flex; gap: 6px;
         }
         
-        .meter-box {
+        .meter {
             background: var(--bg-panel);
             border: 1px solid #2a2a35;
-            border-radius: 8px; padding: 8px 12px;
-            min-width: 90px;
+            border-radius: 6px; padding: 6px 8px;
+            min-width: 70px;
         }
         
-        .meter-box .label {
-            font-size: 8px; color: var(--text-secondary);
-            text-transform: uppercase;
-        }
+        .meter .lb { font-size: 7px; color: var(--text-secondary); text-transform: uppercase; }
         
-        .meter-box .value {
+        .meter .val {
             font-family: 'JetBrains Mono', monospace;
-            font-size: 14px;
+            font-size: 12px;
             color: var(--cyan);
         }
         
-        .meter-box.active .value {
-            color: var(--success);
-            text-shadow: 0 0 8px var(--success);
-        }
+        .meter.on .val { color: var(--success); text-shadow: 0 0 6px var(--success); }
         
-        /* CRO Panel */
         .cro-panel {
-            position: fixed; right: 12px; bottom: 12px;
-            width: 340px; height: 180px;
+            position: fixed; right: 10px; bottom: 10px;
+            width: 300px; height: 160px;
             background: var(--bg-panel);
             border: 1px solid #2a2a35;
-            border-radius: 10px; padding: 8px;
+            border-radius: 8px; padding: 6px;
         }
         
         .cro-title {
-            font-size: 9px; color: var(--accent-pink);
+            font-size: 8px; color: var(--accent-pink);
             text-transform: uppercase; letter-spacing: 1px;
-            margin-bottom: 6px;
+            margin-bottom: 4px;
         }
         
-        .cro-canvas {
-            width: 100%; height: 135px;
+        .cro-cvs {
+            width: 100%; height: 125px;
             background: #000;
-            border-radius: 4px;
+            border-radius: 3px;
             border: 1px solid #222;
         }
         
-        /* Instructions */
-        .instructions {
-            position: fixed; bottom: 12px; left: 50%;
+        .instr {
+            position: fixed; bottom: 10px; left: 50%;
             transform: translateX(-50%);
             background: var(--bg-panel);
             border: 1px solid #2a2a35;
-            border-radius: 6px;
-            padding: 8px 14px;
-            font-size: 9px;
+            border-radius: 5px;
+            padding: 6px 10px;
+            font-size: 8px;
             color: var(--text-secondary);
-            display: flex; gap: 14px;
+            display: flex; gap: 10px;
         }
         
-        .instr-item { display: flex; align-items: center; gap: 4px; }
+        .instr-item { display: flex; align-items: center; gap: 3px; }
         
         .key {
-            padding: 2px 5px;
+            padding: 2px 4px;
             background: rgba(255,255,255,0.1);
-            border-radius: 3px;
-            font-size: 8px;
+            border-radius: 2px;
+            font-size: 7px;
         }
         
         .toast {
-            position: fixed; top: 60px; left: 50%;
+            position: fixed; top: 50px; left: 50%;
             transform: translateX(-50%);
-            padding: 8px 16px;
+            padding: 6px 12px;
             background: var(--accent-purple);
-            border-radius: 5px;
-            font-size: 10px;
+            border-radius: 4px;
+            font-size: 9px;
             z-index: 200;
             display: none;
         }
         
-        .toast.show { display: block; animation: fadeIn 0.3s ease; }
+        .toast.show { display: block; animation: fade 0.3s ease; }
         
-        @keyframes fadeIn {
-            from { opacity: 0; transform: translateX(-50%) translateY(-10px); }
+        @keyframes fade {
+            from { opacity: 0; transform: translateX(-50%) translateY(-8px); }
             to { opacity: 1; transform: translateX(-50%) translateY(0); }
         }
         
-        ::-webkit-scrollbar { width: 4px; }
+        ::-webkit-scrollbar { width: 3px; }
         ::-webkit-scrollbar-thumb { background: #333; border-radius: 2px; }
     </style>
 </head>
 <body>
     <canvas id="canvas"></canvas>
     
-    <!-- Header -->
     <div class="header">
-        <div class="logo">⚡ Advanced Electronics Lab</div>
-        <div class="header-btns">
-            <button class="header-btn" onclick="toggleInfo()">ℹ️ Info</button>
-            <button class="header-btn vr" onclick="enterVR()">🥽 VR Mode</button>
+        <div class="logo">⚡ Complete Electronics Lab</div>
+        <div class="hdr-btns">
+            <button class="hdr-btn" onclick="showHelp()">📖 Help</button>
+            <button class="hdr-btn" onclick="showTheory()">📚 Theory</button>
+            <button class="hdr-btn vr" onclick="enterVR()">🥽 VR</button>
         </div>
-        <div class="status-bar">
+        <div class="status">
             <div class="status-item">
-                <div class="status-dot" id="pwr-dot"></div>
-                <span>Power</span>
+                <div class="dot" id="pwr"></div>
+                <span>PWR</span>
             </div>
             <div class="status-item">
-                <div class="status-dot" id="sim-dot"></div>
-                <span id="sim-lbl">Stopped</span>
-            </div>
-            <div class="status-item">
-                <div class="status-dot" id="vr-dot"></div>
-                <span>VR</span>
+                <div class="dot" id="sim"></div>
+                <span id="simTxt">Stop</span>
             </div>
         </div>
     </div>
     
-    <!-- Component Tray -->
     <div class="left-panel">
-        <div class="panel-label">Components</div>
-        
-        <div class="tray-comp" draggable="true" data-type="resistor" data-val="10000">
-            <div class="icon">⚡</div>
-            <div class="name">10KΩ Res</div>
+        <div class="lbl">Passive</div>
+        <div class="tray-item" draggable="true" data-t="resistor" data-v="10000">
+            <div class="ic">⚡</div>
+            <div class="nm">10K R</div>
+        </div>
+        <div class="tray-item" draggable="true" data-t="capacitor" data-v="0.000001">
+            <div class="ic">🔋</div>
+            <div class="nm">1µF C</div>
+        </div>
+        <div class="tray-item" draggable="true" data-t="inductor" data-v="0.01">
+            <div class="ic">🧲</div>
+            <div class="nm">10mH L</div>
+        </div>
+        <div class="tray-item" draggable="true" data-t="led" data-v="2">
+            <div class="ic">🔴</div>
+            <div class="nm">LED</div>
+        </div>
+        <div class="tray-item" draggable="true" data-t="battery" data-v="9">
+            <div class="ic">🔌</div>
+            <div class="nm">9V</div>
         </div>
         
-        <div class="tray-comp" draggable="true" data-type="inductor" data-val="0.01">
-            <div class="icon">🧲</div>
-            <div class="name">10mH Ind</div>
+        <div class="lbl">Semiconductors</div>
+        <div class="tray-item" draggable="true" data-t="npn" data-v="100">
+            <div class="ic">🔺</div>
+            <div class="nm">NPN</div>
+        </div>
+        <div class="tray-item" draggable="true" data-t="pnp" data-v="100">
+            <div class="ic">🔻</div>
+            <div class="nm">PNP</div>
+        </div>
+        <div class="tray-item" draggable="true" data-t="diode" data-v="1">
+            <div class="ic">▶</div>
+            <div class="nm">Diode</div>
+        </div>
+        <div class="tray-item" draggable="true" data-t="zener" data-v="5.1">
+            <div class="ic">◀</div>
+            <div class="nm">Zener</div>
+        </div>
+        <div class="tray-item" draggable="true" data-t="mosfet" data-v="1">
+            <div class="ic">⊞</div>
+            <div class="nm">MOSFET</div>
         </div>
         
-        <div class="tray-comp" draggable="true" data-type="capacitor" data-val="0.000001">
-            <div class="icon">🔋</div>
-            <div class="name">1µF Cap</div>
-        </div>
-        
-        <div class="tray-comp" draggable="true" data-type="capacitor" data-val="0.000047">
-            <div class="icon">🔋</div>
-            <div class="name">47µF Cap</div>
-        </div>
-        
-        <div class="tray-comp" draggable="true" data-type="led" data-val="2">
-            <div class="icon">🔴</div>
-            <div class="name">LED</div>
-        </div>
-        
-        <div class="tray-comp" draggable="true" data-type="battery" data-val="9">
-            <div class="icon">🔌</div>
-            <div class="name">9V Battery</div>
-        </div>
-        
-        <div class="tray-comp" draggable="true" data-type="generator" data-val="1000">
-            <div class="icon">🎵</div>
-            <div class="name">Signal Gen</div>
+        <div class="lbl">Amplifiers</div>
+        <div class="tray-item" draggable="true" data-t="opamp" data-v="1">
+            <div class="ic">🛢️</div>
+            <div class="nm">Op-Amp</div>
         </div>
     </div>
     
-    <!-- Measurements -->
-    <div class="bottom-panel">
-        <div class="meter-box" id="voltage-box">
-            <div class="label">Voltage</div>
-            <div class="value" id="voltage-val">0.00 V</div>
-        </div>
-        
-        <div class="meter-box" id="current-box">
-            <div class="label">Current</div>
-            <div class="value" id="current-val">0.00 mA</div>
-        </div>
-        
-        <div class="meter-box" id="freq-box">
-            <div class="label">Frequency</div>
-            <div class="value" id="freq-val">0 Hz</div>
-        </div>
-        
-        <div class="meter-box" id="period-box">
-            <div class="label">Period</div>
-            <div class="value" id="period-val">--</div>
-        </div>
-    </div>
-    
-    <!-- Circuit Builder -->
     <div class="right-panel">
-        <div class="section-title">Placed Components</div>
-        <div class="placed-list" id="placed-list"></div>
+        <div class="sec-title">Placed</div>
+        <div class="placed" id="placed"></div>
         
-        <div class="section-title">Circuit Type</div>
-        <div class="circuit-grid">
-            <button class="circuit-btn active" data-ckt="rc-low">RC Low-Pass</button>
-            <button class="circuit-btn" data-ckt="rc-high">RC High-Pass</button>
-            <button class="circuit-btn" data-ckt="rl-low">RL Low-Pass</button>
-            <button class="circuit-btn" data-ckt="rl-high">RL High-Pass</button>
-            <button class="circuit-btn" data-ckt="rlc-series">RLC Series</button>
-            <button class="circuit-btn" data-ckt="rlc-parallel">RLC Parallel</button>
-            <button class="circuit-btn" data-ckt="charge">Charge</button>
-            <button class="circuit-btn" data-ckt="discharge">Discharge</button>
+        <div class="sec-title">Circuit</div>
+        <div class="ckt-grid">
+            <button class="ckt-btn active" data-c="rc">RC Filter</button>
+            <button class="ckt-btn" data-c="rl">RL Filter</button>
+            <button class="ckt-btn" data-c="charge">Charge</button>
+            <button class="ckt-btn" data-c="discharge">Discharge</button>
+            <button class="ckt-btn" data-c="ce">NPN CE</button>
+            <button class="ckt-btn" data-c="cb">NPN CB</button>
+            <button class="ckt-btn" data-c="cc">NPN CC</button>
+            <button class="ckt-btn" data-c="emitter">Emitter</button>
+            <button class="ckt-btn" data-c="diode-clipper">Clipper</button>
+            <button class="ckt-btn" data-c="zener-reg">Zener Reg</button>
+            <button class="ckt-btn" data-c="rectifier">Rectifier</button>
+            <button class="ckt-btn" data-c="amp-noninv">Op-Amp</button>
+            <button class="ckt-btn" data-c="integrator">Integrator</button>
+            <button class="ckt-btn" data-c="differentiator">Differentiator</button>
         </div>
         
-        <div class="section-title">Component Values</div>
+        <div class="sec-title">Values</div>
         
-        <div class="slider-group">
-            <div class="slider-row">
-                <span>Resistance (R)</span>
-                <span class="val" id="r-disp">10KΩ</span>
-            </div>
-            <input type="range" id="r-sldr" min="1" max="100" value="10">
+        <div class="slider">
+            <div class="slider-row"><span>R</span><span class="v" id="r-disp">10KΩ</span></div>
+            <input type="range" id="r-sld" min="1" max="100" value="10">
         </div>
         
-        <div class="slider-group">
-            <div class="slider-row">
-                <span>Inductance (L)</span>
-                <span class="val" id="l-disp">10mH</span>
-            </div>
-            <input type="range" id="l-sldr" min="1" max="100" value="10">
+        <div class="slider">
+            <div class="slider-row"><span>C</span><span class="v" id="c-disp">1µF</span></div>
+            <input type="range" id="c-sld" min="1" max="100" value="1">
         </div>
         
-        <div class="slider-group">
-            <div class="slider-row">
-                <span>Capacitance (C)</span>
-                <span class="val" id="c-disp">1µF</span>
-            </div>
-            <input type="range" id="c-sldr" min="1" max="100" value="1">
+        <div class="slider">
+            <div class="slider-row"><span>Vcc</span><span class="v" id="v-disp">9V</span></div>
+            <input type="range" id="v-sld" min="3" max="24" value="9">
         </div>
         
-        <div class="slider-group">
-            <div class="slider-row">
-                <span>Frequency (f)</span>
-                <span class="val" id="f-disp">1KHz</span>
-            </div>
-            <input type="range" id="f-sldr" min="1" max="100" value="10">
+        <div class="slider">
+            <div class="slider-row"><span>Hfe</span><span class="v" id="h-disp">100</span></div>
+            <input type="range" id="h-sld" min="20" max="300" value="100">
         </div>
         
-        <div class="results-box">
-            <div class="result-row">
-                <span class="l">Time Constant τ</span>
-                <span class="v" id="tau-r">--</span>
-            </div>
-            <div class="result-row">
-                <span class="l">Cutoff fc</span>
-                <span class="v" id="fc-r">--</span>
-            </div>
-            <div class="result-row">
-                <span class="l">Resonant fr</span>
-                <span class="v" id="fr-r">--</span>
-            </div>
-            <div class="result-row">
-                <span class="l">Q Factor</span>
-                <span class="v" id="q-r">--</span>
-            </div>
+        <div class="results">
+            <div class="result"><span class="l">τ/β</span><span class="v" id="tau"></span></div>
+            <div class="result"><span class="l">fc/fr</span><span class="v" id="fc"></span></div>
+            <div class="result"><span class="l">Gain</span><span class="v" id="gain"></span></div>
+            <div class="result"><span class="l">Vout</span><span class="v" id="vout"></span></div>
         </div>
         
-        <button class="run-btn" id="run-btn" disabled onclick="toggleSim()">▶ Run Simulation</button>
+        <button class="run-btn" id="run" disabled onclick="toggleSim()">▶ Run</button>
     </div>
     
-    <!-- CRO -->
+    <div class="meters">
+        <div class="meter" id="m-v"><div class="lb">Vout</div><div class="val" id="v-val">0V</div></div>
+        <div class="meter" id="m-i"><div class="lb">Iout</div><div class="val" id="i-val">0mA</div></div>
+        <div class="meter" id="m-g"><div class="lb">Gain</div><div class="val" id="g-val">--</div></div>
+        <div class="meter" id="m-p"><div class="lb">Freq</div><div class="val" id="f-val">0Hz</div></div>
+    </div>
+    
     <div class="cro-panel">
-        <div class="cro-title">CRO Oscilloscope</div>
-        <canvas class="cro-canvas" id="cro-canvas"></canvas>
+        <div class="cro-title">CRO / Oscilloscope</div>
+        <canvas class="cro-cvs" id="cro"></canvas>
     </div>
     
-    <!-- Instructions -->
-    <div class="instructions">
-        <div class="instr-item"><span class="key">Drag</span> Add to board</div>
-        <div class="instr-item"><span class="key">Right-drag</span> Rotate</div>
+    <div class="instr">
+        <div class="instr-item"><span class="key">Drag</span> Build</div>
+        <div class="instr-item"><span class="key">Right</span> Rotate</div>
         <div class="instr-item"><span class="key">Scroll</span> Zoom</div>
-        <div class="instr-item"><span class="key">VR</span> Quest browser</div>
     </div>
     
-    <!-- Toast -->
     <div class="toast" id="toast"></div>
 
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
     <script>
-        // ===== STATE =====
-        const state = {
-            circuit: 'rc-low',
-            placed: [],
-            running: false,
-            r: 10000,
-            l: 0.01,
-            c: 0.000001,
-            f: 1000
-        };
+        // STATE
+        const S = { ckt: 'rc', run: false, R: 10000, C: 0.000001, Vcc: 9, Hfe: 100, placed: [] };
         
-        // ===== THREE.JS =====
-        let scene, camera, renderer, board;
-        let placedObjs = [];
-        let raycaster, mouse;
-        let isMouse = false, lx = 0, ly = 0;
-        let ca = 0, ch = 8, cd = 14;
+        // THREE
+        let scn, cam, rdr, board, ray, mse, drg = false, lx = 0, ly = 0, ca = 0, ch = 8, cd = 14, objs = [];
         
         function init() {
-            scene = new THREE.Scene();
-            scene.background = new THREE.Color(0x0a0a0f);
-            scene.fog = new THREE.Fog(0x0a0a0f, 15, 40);
+            scn = new THREE.Scene();
+            scn.background = new THREE.Color(0x0a0a0f);
+            scn.fog = new THREE.Fog(0x0a0a0f, 15, 40);
             
-            camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 0.1, 100);
-            camera.position.set(0, 10, 14);
-            camera.lookAt(0, 0, 0);
+            cam = new THREE.PerspectiveCamera(60, w() / h(), 0.1, 100);
+            cam.pos = new THREE.Vector3(0, 10, 14);
+            cam.lookAt(0, 0, 0);
             
-            renderer = new THREE.WebGLRenderer({ canvas: document.getElementById('canvas'), antialias: true });
-            renderer.setSize(window.innerWidth, window.innerHeight);
-            renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
-            renderer.shadowMap.enabled = true;
+            rdr = new THREE.WebGLRenderer({ c: document.getElementById('canvas'), antialias: true });
+            rdr.setSize(w(), h());
+            rdr.setPixelRatio(Math.min(devicePixelRatio, 2));
+            rdr.shadowMap.enabled = true;
             
             // Lights
-            scene.add(new THREE.AmbientLight(0x404060, 0.6));
-            
-            const main = new THREE.DirectionalLight(0xffffff, 0.8);
-            main.position.set(5, 15, 10);
-            main.castShadow = true;
-            scene.add(main);
-            
-            const p1 = new THREE.PointLight(0x831C91, 0.4, 20);
-            p1.position.set(-5, 5, -5);
-            scene.add(p1);
-            
-            const p2 = new THREE.PointLight(0xFF70BF, 0.3, 15);
-            p2.position.set(5, 3, 5);
-            scene.add(p2);
+            scn.add(new THREE.AmbientLight(0x404060, 0.6));
+            const ml = new THREE.DirectionalLight 0xffffff, 0.8);
+            ml.pos.set(5, 15, 10);
+            ml.castShadow = true;
+            scn.add(ml);
+            scn.add(new THREE.PointLight(0x831C91, 0.4, 20).pos.set(-5, 5, -5));
+            scn.add(new THREE.PointLight(0xFF70BF, 0.3, 15).pos.set(5, 3, 5));
             
             // Grid
-            scene.add(new THREE.GridHelper(30, 30, 0x2a2a35, 0x1a1a25));
-            const floor = new THREE.Mesh(
-                new THREE.PlaneGeometry(30, 30),
-                new THREE.MeshStandardMaterial({ color: 0x0a0a0f, roughness: 0.9 })
-            );
-            floor.rotation.x = -Math.PI / 2;
-            scene.add(floor);
+            scn.add(new THREE.GridHelper(30, 30, 0x2a2a35, 0x1a1a25));
+            const fl = new THREE.Mesh(new THREE.PlaneGeometry(30, 30), new THREE.MeshStandardMaterial({ color: 0x0a0a0f, roughness: 0.9 }));
+            fl.rotation.x = -Math.PI / 2;
+            scn.add(fl);
             
             createTable();
             createBoard();
             
-            raycaster = new THREE.Raycaster();
-            mouse = new THREE.Vector2();
+            ray = new THREE.Raycaster();
+            mse = new THREE.Vector2();
             
             events();
             animate();
             animateCRO();
-            updateUI();
+            ui();
         }
         
+        function w() { return innerWidth; }
+        function h() { return innerHeight; }
+        
         function createTable() {
-            const t = new THREE.Mesh(
-                new THREE.BoxGeometry(5, 0.15, 3.5),
-                new THREE.MeshStandardMaterial({ color: 0x1a1a25, roughness: 0.3, metalness: 0.7 })
-            );
-            t.position.y = 1;
-            scene.add(t);
+            const t = new THREE.Mesh(new THREE.BoxGeometry(5, 0.15, 3.5), new THREE.MeshStandardMaterial({ color: 0x1a1a25, roughness: 0.3, metalness: 0.7 }));
+            t.pos.y = 1;
+            scn.add(t);
             
-            // Legs
             [[-2.2, 0.5, -1.5], [2.2, 0.5, -1.5], [-2.2, 0.5, 1.5], [2.2, 0.5, 1.5]].forEach(p => {
-                const l = new THREE.Mesh(
-                    new THREE.CylinderGeometry(0.06, 0.06, 1, 8),
-                    new THREE.MeshStandardMaterial({ color: 0x2a2a35, metalness: 0.8 })
-                );
-                l.position.set(...p);
-                scene.add(l);
+                const l = new THREE.Mesh(new THREE.CylinderGeometry(0.06, 0.06, 1, 8), new THREE.MeshStandardMaterial({ color: 0x2a2a35, metalness: 0.8 }));
+                l.pos.set(...p);
+                scn.add(l);
             });
             
             // Label
-            const c = document.createElement('canvas');
-            c.width = 400; c.height = 80;
+            const c = dc();
+            c.width = 400; c.height = 60;
             const ctx = c.getContext('2d');
             ctx.fillStyle = '#831C91';
-            ctx.fillRect(0, 0, 400, 80);
+            ctx.fillRect(0, 0, 400, 60);
             ctx.fillStyle = '#FF70BF';
-            ctx.font = 'bold 28px monospace';
+            ctx.font = 'bold 24px monospace';
             ctx.textAlign = 'center';
-            ctx.fillText('ADVANCED ELECTRONICS LAB', 200, 50);
+            ctx.fillText('COMPLETE ELECTRONICS LAB', 200, 40);
             
-            const lb = new THREE.Mesh(
-                new THREE.PlaneGeometry(3.5, 0.7),
-                new THREE.MeshBasicMaterial({ map: new THREE.CanvasTexture(c), transparent: true })
-            );
-            lb.position.set(0, 1.5, -1.55);
+            const lb = new THREE.Mesh(new THREE.PlaneGeometry(3.5, 0.5), new THREE.MeshBasicMaterial({ map: new THREE.CanvasTexture(c), transparent: true }));
+            lb.pos.set(0, 1.5, -1.55);
             lb.rotation.x = -0.3;
-            scene.add(lb);
+            scn.add(lb);
         }
+        
+        function dc() { return document.createElement('canvas'); }
         
         function createBoard() {
-            board = new THREE.Mesh(
-                new THREE.BoxGeometry(3, 0.12, 2),
-                new THREE.MeshStandardMaterial({ color: 0x1a1a25, roughness: 0.4, metalness: 0.5 })
-            );
-            board.position.set(0, 1.12, 0);
+            board = new THREE.Mesh(new THREE.BoxGeometry(3, 0.12, 2), new THREE.MeshStandardMaterial({ color: 0x1a1a25, roughness: 0.4, metalness: 0.5 }));
+            board.pos.set(0, 1.12, 0);
             board.name = 'board';
-            scene.add(board);
+            scn.add(board);
             
-            // Rails
-            const r = new THREE.Mesh(
-                new THREE.BoxGeometry(3, 0.08, 0.12),
-                new THREE.MeshStandardMaterial({ color: 0xcc2222 })
-            );
-            r.position.set(0, 1.18, -0.85);
-            scene.add(r);
+            // Power rails
+            const rr = new THREE.Mesh(new THREE.BoxGeometry(3, 0.08, 0.12), new THREE.MeshStandardMaterial({ color: 0xcc2222 }));
+            rr.pos.set(0, 1.18, -0.85);
+            scn.add(rr);
             
-            const b = new THREE.Mesh(
-                new THREE.BoxGeometry(3, 0.08, 0.12),
-                new THREE.MeshStandardMaterial({ color: 0x2222cc })
-            );
-            b.position.set(0, 1.18, 0.85);
-            scene.add(b);
+            const br = new THREE.Mesh(new THREE.BoxGeometry(3, 0.08, 0.12), new THREE.MeshStandardMaterial({ color: 0x2222cc }));
+            br.pos.set(0, 1.18, 0.85);
+            scn.add(br);
         }
         
-        // ===== COMPONENTS =====
-        function comp3D(type, val) {
+        function comp3D(t, v) {
             const g = new THREE.Group();
-            g.userData = { type, val };
+            g.ud = { t, v };
             
-            const cols = { resistor: 0xd552a3, inductor: 0x46a7d7, capacitor: 0x462c7d, led: 0xff3333, battery: 0x22aa22, generator: 0x22aa66 };
-            const m = new THREE.MeshStandardMaterial({ color: cols[type] || 0x831c91, roughness: 0.4, metalness: 0.6 });
+            const cols = { resistor: 0xd552a3, capacitor: 0x462c7d, inductor: 0x46a7d7, led: 0xff3333, battery: 0x22aa22, npn: 0x228822, pnp: 0x882288, diode: 0xffaa00, zener: 0xaa44aa, mosfet: 0x444488, opamp: 0x448844 };
+            const m = new THREE.MeshStandardMaterial({ color: cols[t] || 0x831c91, roughness: 0.4, metalness: 0.6 });
             
-            switch(type) {
+            switch(t) {
                 case 'resistor':
                     const b = new THREE.Mesh(new THREE.CylinderGeometry(0.05, 0.05, 0.25, 12), m);
                     b.rotation.z = Math.PI / 2;
                     g.add(b);
                     [0x8B4513, 0xFF8C00, 0xFFD700].forEach((c, i) => {
-                        const bn = new THREE.Mesh(
-                            new THREE.CylinderGeometry(0.052, 0.052, 0.025, 12),
-                            new THREE.MeshStandardMaterial({ color: c })
-                        );
+                        const bn = new THREE.Mesh(new THREE.CylinderGeometry(0.052, 0.052, 0.025, 12), new THREE.MeshStandardMaterial({ color: c }));
                         bn.rotation.z = Math.PI / 2;
-                        bn.position.x = -0.08 + i * 0.05;
+                        bn.pos.x = -0.08 + i * 0.05;
                         g.add(bn);
                     });
-                    break;
-                    
-                case 'inductor':
-                    const coil = new THREE.Mesh(new THREE.TorusGeometry(0.08, 0.02, 8, 24), m);
-                    coil.rotation.x = Math.PI / 2;
-                    g.add(coil);
-                    const c2 = new THREE.Mesh(new THREE.TorusGeometry(0.06, 0.02, 8, 24), m);
-                    c2.rotation.x = Math.PI / 2;
-                    c2.position.y = 0.04;
-                    g.add(c2);
                     break;
                     
                 case 'capacitor':
                     g.add(new THREE.Mesh(new THREE.CylinderGeometry(0.07, 0.07, 0.18, 16), m));
                     break;
                     
+                case 'inductor':
+                    const coil = new THREE.Mesh(new THREE.TorusGeometry(0.08, 0.02, 8, 24), m);
+                    coil.rotation.x = Math.PI / 2;
+                    g.add(coil);
+                    break;
+                    
                 case 'led':
-                    g.add(new THREE.Mesh(
-                        new THREE.SphereGeometry(0.07, 16, 16, 0, Math.PI * 2, 0, Math.PI / 2),
-                        new THREE.MeshStandardMaterial({ color: 0xff0000, emissive: 0xff0000, emissiveIntensity: 0.3, transparent: true, opacity: 0.8 })
-                    ));
+                    g.add(new THREE.Mesh(new THREE.SphereGeometry(0.07, 16, 16, 0, Math.PI*2, 0, Math.PI/2), new THREE.MeshStandardMaterial({ color: 0xff0000, emissive: 0xff0000, emissiveIntensity: 0.3, transparent: true, opacity: 0.8 })));
                     break;
                     
                 case 'battery':
                     g.add(new THREE.Mesh(new THREE.BoxGeometry(0.22, 0.35, 0.14), m));
-                    g.add(new THREE.Mesh(
-                        new THREE.CylinderGeometry(0.018, 0.018, 0.04, 8),
-                        new THREE.MeshStandardMaterial({ color: 0xcc2222 })
-                    ));
+                    g.add(new THREE.Mesh(new THREE.CylinderGeometry(0.018, 0.018, 0.04, 8), new THREE.MeshStandardMaterial({ color: 0xcc2222 })));
                     break;
                     
-                case 'generator':
-                    g.add(new THREE.Mesh(new THREE.BoxGeometry(0.35, 0.25, 0.2), m));
-                    const ant = new THREE.Mesh(
-                        new THREE.CylinderGeometry(0.02, 0.02, 0.15, 8),
-                        new THREE.MeshStandardMaterial({ color: 0x888888 })
-                    );
-                    ant.position.y = 0.2;
-                    g.add(ant);
+                case 'npn':
+                    g.add(new THREE.Mesh(new THREE.BoxGeometry(0.2, 0.15, 0.1), m));
+                    // Leads
+                    ['e','b','c'].forEach((l, i) => {
+                        const lead = new THREE.Mesh(new THREE.CylinderGeometry(0.015, 0.015, 0.1, 8), new THREE.MeshStandardMaterial({ color: 0x888888 }));
+                        lead.pos.set(-0.07 + i * 0.07, 0, 0.08);
+                        g.add(lead);
+                    });
                     break;
+                    
+                case 'diode':
+                    g.add(new THREE.Mesh(new THREE.CylinderGeometry(0.04, 0.04, 0.12, 12), m));
+                    break;
+                    
+                case 'zener':
+                    g.add(new THREE.Mesh(new THREE.CylinderGeometry(0.04, 0.04, 0.15, 12), m));
+                    break;
+                    
+                case 'opamp':
+                    const pkg = new THREE.Mesh(new THREE.BoxGeometry(0.3, 0.1, 0.2), m);
+                    g.add(pkg);
+                    // Pins
+                    for (let i = 0; i < 3; i++) {
+                        const pin = new THREE.Mesh(new THREE.CylinderGeometry(0.012, 0.012, 0.06, 8), new THREE.MeshStandardMaterial({ color: 0x888888 }));
+                        pin.pos.set(-0.1 + i * 0.1, 0, 0.13);
+                        g.add(pin);
+                    }
+                    break;
+                    
+                default:
+                    g.add(new THREE.Mesh(new THREE.BoxGeometry(0.15, 0.15, 0.15), m));
             }
             
-            g.traverse(c => { if (c.isMesh) { c.castShadow = true; } });
+            g.traverse(c => { if (c.isMesh) c.castShadow = true; });
             return g;
         }
         
         function canP(x, z) { return x >= -1.4 && x <= 1.4 && z >= -0.9 && z <= 0.9; }
         
-        function place(type, val, x, z) {
+        function place(t, v, x, z) {
             if (!canP(x, z)) { show('Place on breadboard'); return false; }
-            for (const c of placedObjs) {
-                if (Math.sqrt((c.position.x - x) ** 2 + (c.position.z - z) ** 2) < 0.25) { show('Too close'); return false; }
+            for (const o of objs) {
+                if (Math.sqrt((o.pos.x - x)**2 + (o.pos.z - z)**2) < 0.22) { show('Too close'); return false; }
             }
-            const o = comp3D(type, val);
-            o.position.set(x, 1.25, z);
-            scene.add(o);
-            placedObjs.push(o);
-            state.placed.push({ type, val, x, z });
-            updateUI();
-            show('Added ' + type);
+            const o = comp3D(t, v);
+            o.pos.set(x, 1.25, z);
+            scn.add(o);
+            objs.push(o);
+            S.placed.push({ t, v, x, z });
+            ui();
+            show('Added ' + t);
             return true;
         }
         
-        function rem(idx) {
-            scene.remove(placedObjs[idx]);
-            placedObjs.splice(idx, 1);
-            state.placed.splice(idx, 1);
-            updateUI();
+        function rem(i) {
+            scn.remove(objs[i]);
+            objs.splice(i, 1);
+            S.placed.splice(i, 1);
+            ui();
         }
         
-        // ===== CALCULATIONS =====
+        // CALC
         function calc() {
-            const R = state.placed.find(c => c.type === 'resistor')?.val || state.r;
-            const L = state.placed.find(c => c.type === 'inductor')?.val || state.l;
-            const C = state.placed.find(c => c.type === 'capacitor')?.val || state.c;
-            const f = state.f;
-            
+            const R = S.R, C = S.C, V = S.Vcc, H = S.Hfe;
             const tauRC = R * C;
-            const tauRL = L / R;
-            const fcRC = 1 / (2 * Math.PI * R * C);
-            const fcRL = R / (2 * Math.PI * L);
-            
-            // RLC resonant
-            const fr = 1 / (2 * Math.PI * Math.sqrt(L * C));
-            const Q = (1 / R) * Math.sqrt(L / C);
-            
-            return { R, L, C, f, tauRC, tauRL, fcRC, fcRL, fr, Q };
+            const fc = 1 / (2 * Math.PI * R * C);
+            const vb = V * R / (R + R);
+            const ic = (V - 0.7) / R;
+            const gain = H;
+            const vout = vb;
+            return { R, C, V, H, tauRC, fc, vb, ic, gain, vout };
         }
         
         function canRun() {
-            const types = state.placed.map(c => c.type);
-            if (state.circuit.includes('rlc')) {
-                return types.includes('resistor') && types.includes('inductor') && types.includes('capacitor');
-            }
-            if (state.circuit.includes('rl')) {
-                return types.includes('resistor') && types.includes('inductor');
-            }
-            if (['charge', 'discharge'].includes(state.circuit)) {
-                return types.includes('resistor') && types.includes('capacitor') && types.includes('battery');
-            }
-            return types.includes('resistor') && types.includes('capacitor');
+            const ts = S.placed.map(p => p.t);
+            if (['ce','cb','cc','emitter'].some(c => S.ckt === c)) return ts.includes('npn') && ts.includes('resistor');
+            if (S.ckt === 'zener-reg') return ts.includes('zener') && ts.includes('resistor');
+            if (S.ckt === 'rectifier') return ts.includes('diode');
+            if (S.ckt === 'amp-noninv' || S.ckt === 'integrator' || S.ckt === 'differentiator') return ts.includes('opamp');
+            return ts.includes('resistor') && (ts.includes('capacitor') || ts.includes('battery'));
         }
         
         function toggleSim() {
-            if (state.running) {
-                stopSim();
-            } else {
-                startSim();
-            }
+            if (S.run) stop(); else start();
         }
         
-        function startSim() {
+        function start() {
             if (!canRun()) return;
-            state.running = true;
-            document.getElementById('run-btn').textContent = '⏹ Stop';
-            document.getElementById('pwr-dot').classList.add('on');
-            document.getElementById('sim-dot').classList.add('on');
-            document.getElementById('sim-lbl').textContent = 'Running';
+            S.run = true;
+            document.getElementById('run').textContent = '⏹ Stop';
+            document.getElementById('pwr').classList.add('on');
+            document.getElementById('sim').classList.add('on');
+            document.getElementById('simTxt').textContent = 'Run';
             
-            // LED on
-            const led = placedObjs.find(c => c.userData.type === 'led');
+            const led = objs.find(o => o.ud.t === 'led');
             if (led?.children[0]) led.children[0].material.emissiveIntensity = 1;
             
-            // Update meters
             const r = calc();
-            const I = r.R > 0 ? 9 / r.R : 0;
-            document.getElementById('voltage-val').textContent = '9.00 V';
-            document.getElementById('current-val').textContent = (I * 1000).toFixed(2) + ' mA';
-            document.getElementById('freq-val').textContent = r.f + ' Hz';
-            document.getElementById('period-val').textContent = (1 / r.f * 1000).toFixed(1) + ' ms';
+            document.getElementById('v-val').textContent = r.vout.toFixed(2) + 'V';
+            document.getElementById('i-val').textContent = (r.ic * 1000).toFixed(2) + 'mA';
+            document.getElementById('g-val').textContent = r.gain;
+            document.getElementById('f-val').textContent = r.fc.toFixed(1) + 'Hz';
+            
+            ['m-v','m-i','m-g','m-p'].forEach(id => document.getElementById(id).classList.add('on'));
         }
         
-        function stopSim() {
-            state.running = false;
-            document.getElementById('run-btn').textContent = '▶ Run Simulation';
-            document.getElementById('pwr-dot').classList.remove('on');
-            document.getElementById('sim-dot').classList.remove('on');
-            document.getElementById('sim-lbl').textContent = 'Stopped';
+        function stop() {
+            S.run = false;
+            document.getElementById('run').textContent = '▶ Run';
+            document.getElementById('pwr').classList.remove('on');
+            document.getElementById('sim').classList.remove('on');
+            document.getElementById('simTxt').textContent = 'Stop';
             
-            const led = placedObjs.find(c => c.userData.type === 'led');
+            const led = objs.find(o => o.ud.t === 'led');
             if (led?.children[0]) led.children[0].material.emissiveIntensity = 0.3;
             
-            document.getElementById('voltage-val').textContent = '0.00 V';
-            document.getElementById('current-val').textContent = '0.00 mA';
-            document.getElementById('freq-val').textContent = '0 Hz';
-            document.getElementById('period-val').textContent = '--';
+            document.getElementById('v-val').textContent = '0V';
+            document.getElementById('i-val').textContent = '0mA';
+            document.getElementById('g-val').textContent = '--';
+            document.getElementById('f-val').textContent = '0Hz';
+            
+            ['m-v','m-i','m-g','m-p'].forEach(id => document.getElementById(id).classList.remove('on'));
         }
         
-        // ===== CRO =====
-        let t = 0;
+        // CRO
+        let croT = 0;
         function animateCRO() {
-            const cvs = document.getElementById('cro-canvas');
+            const cvs = document.getElementById('cro');
             const ctx = cvs.getContext('2d');
             if (!cvs.width) { cvs.width = cvs.offsetWidth; cvs.height = cvs.offsetHeight; }
             
-            const w = cvs.width, h = cvs.height;
-            t += 0.016;
+            const W = cvs.width, H = cvs.height;
+            croT += 0.016;
             
             ctx.fillStyle = '#000';
-            ctx.fillRect(0, 0, w, h);
+            ctx.fillRect(0, 0, W, H);
             
-            // Grid
             ctx.strokeStyle = '#1a1a1a';
-            for (let i = 0; i <= 10; i++) {
-                ctx.beginPath(); ctx.moveTo(i * w / 10, 0); ctx.lineTo(i * w / 10, h); ctx.stroke();
-            }
-            for (let i = 0; i <= 8; i++) {
-                ctx.beginPath(); ctx.moveTo(0, i * h / 8); ctx.lineTo(w, i * h / 8); ctx.stroke();
-            }
+            for (let i = 0; i <= 10; i++) { ctx.beginPath(); ctx.moveTo(i * W / 10, 0); ctx.lineTo(i * W / 10, H); ctx.stroke(); }
+            for (let i = 0; i <= 8; i++) { ctx.beginPath(); ctx.moveTo(0, i * H / 8); ctx.lineTo(W, i * H / 8); ctx.stroke(); }
             
             ctx.strokeStyle = '#222';
-            ctx.beginPath(); ctx.moveTo(w/2, 0); ctx.lineTo(w/2, h); ctx.stroke();
-            ctx.beginPath(); ctx.moveTo(0, h/2); ctx.lineTo(w, h/2); ctx.stroke();
+            ctx.beginPath(); ctx.moveTo(W/2, 0); ctx.lineTo(W/2, H); ctx.stroke();
+            ctx.beginPath(); ctx.moveTo(0, H/2); ctx.lineTo(W, H/2); ctx.stroke();
             
-            if (state.running && canRun()) {
+            if (S.run && canRun()) {
                 const r = calc();
                 
-                if (state.circuit === 'charge') {
+                if (['charge','integrator'].includes(S.ckt)) {
                     ctx.strokeStyle = '#ffff00';
                     ctx.lineWidth = 2;
                     ctx.beginPath();
-                    for (let x = 0; x < w; x++) {
-                        const tt = (x / w) * r.tauRC * 10;
-                        const v = 9 * (1 - Math.exp(-tt / r.tauRC));
-                        const y = h - (v / 9) * (h * 0.8) - 20;
+                    for (let x = 0; x < W; x++) {
+                        const tt = (x / W) * r.tauRC * 8;
+                        const v = r.V * (1 - Math.exp(-tt / r.tauRC));
+                        const y = H - (v / r.V) * (H * 0.8) - 20;
                         x === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y);
                     }
                     ctx.stroke();
                 }
-                else if (state.circuit === 'discharge') {
-                    ctx.strokeStyle = '#ff6600';
-                    ctx.lineWidth = 2;
-                    ctx.beginPath();
-                    for (let x = 0; x < w; x++) {
-                        const tt = (x / w) * r.tauRC * 10;
-                        const v = 9 * Math.exp(-tt / r.tauRC);
-                        const y = h - (v / 9) * (h * 0.8) - 20;
-                        x === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y);
-                    }
-                    ctx.stroke();
-                }
-                else if (state.circuit.includes('rlc')) {
-                    // RLC resonance - damped oscillation
+                else if (S.ckt === 'differentiator') {
                     ctx.strokeStyle = '#00ffff';
                     ctx.lineWidth = 2;
                     ctx.beginPath();
-                    const damp = Math.exp(-r.R * t / (2 * r.L));
-                    const osc = Math.cos(2 * Math.PI * r.fr * t);
-                    for (let x = 0; x < w; x++) {
-                        const tt = (x / w) * 0.02;
-                        const d = Math.exp(-r.R * tt / (2 * r.L));
-                        const o = Math.cos(2 * Math.PI * r.fr * tt);
-                        const y = h/2 + d * o * h * 0.35;
+                    for (let x = 0; x < W; x++) {
+                        const tt = (x / W) * 0.01;
+                        const v = r.V * Math.exp(-tt / r.tauRC);
+                        const y = H - (v / r.V) * (H * 0.8) - 20;
+                        x === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y);
+                    }
+                    ctx.stroke();
+                }
+                else if (['ce','emitter'].includes(S.ckt)) {
+                    ctx.strokeStyle = '#00ff00';
+                    ctx.lineWidth = 2;
+                    ctx.beginPath();
+                    const base = Math.sin(croT * 5) > 0 ? r.V : 0;
+                    for (let x = 0; x < W; x++) {
+                        const y = H - (base / r.V) * (H * 0.7) - 30;
+                        x === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y);
+                    }
+                    ctx.stroke();
+                }
+                else if (['rectifier','diode-clipper'].includes(S.ckt)) {
+                    // Full wave rectification
+                    ctx.strokeStyle = '#ffaa00';
+                    ctx.lineWidth = 2;
+                    ctx.beginPath();
+                    for (let x = 0; x < W; x++) {
+                        const v = Math.abs(Math.sin((x / W) * Math.PI * 4 + croT * 3));
+                        const y = H - v * (H * 0.35) - H/2;
+                        x === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y);
+                    }
+                    ctx.stroke();
+                }
+                else if (S.ckt === 'zener-reg') {
+                    ctx.strokeStyle = '#aa44aa';
+                    ctx.lineWidth = 2;
+                    ctx.beginPath();
+                    for (let x = 0; x < W; x++) {
+                        const v = 5.1;
+                        const y = H - (v / 9) * (H * 0.8) - 20;
+                        x === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y);
+                    }
+                    ctx.stroke();
+                    
+                    ctx.fillStyle = '#aa44aa';
+                    ctx.font = '9px monospace';
+                    ctx.fillText('Zener: 5.1V', 8, 15);
+                }
+                else if (S.ckt === 'amp-noninv') {
+                    ctx.strokeStyle = '#00ff88';
+                    ctx.lineWidth = 2;
+                    ctx.beginPath();
+                    const gain = 1 + (R / R);
+                    for (let x = 0; x < W; x++) {
+                        const yin = Math.sin((x / W) * Math.PI * 2 + croT * 2);
+                        const yout = yin * gain;
+                        const y = H/2 - yout * (H * 0.3);
                         x === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y);
                     }
                     ctx.stroke();
                 }
                 else {
-                    // Filter response - sine wave
-                    const color = state.circuit.includes('low') ? '#00ff00' : '#00ff88';
-                    ctx.strokeStyle = color;
+                    ctx.strokeStyle = '#00ff00';
                     ctx.lineWidth = 2;
                     ctx.beginPath();
-                    const cyc = state.circuit.includes('rc') ? 3 : 2;
-                    for (let x = 0; x < w; x++) {
-                        const y = h/2 + Math.sin((x / w) * cyc * Math.PI * 2 + t * 3) * h * 0.35;
+                    for (let x = 0; x < W; x++) {
+                        const y = H/2 + Math.sin((x / W) * Math.PI * 6 + croT * 3) * H * 0.35;
                         x === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y);
                     }
                     ctx.stroke();
                 }
                 
                 ctx.fillStyle = '#00ff00';
-                ctx.font = '10px monospace';
-                ctx.fillText('fc = ' + (state.circuit.includes('rl') ? r.fcRL.toFixed(1) : r.fcRC.toFixed(1)) + ' Hz', 8, 15);
+                ctx.font = '9px monospace';
+                ctx.fillText('fc = ' + r.fc.toFixed(1) + 'Hz', 8, 15);
             }
             else {
                 ctx.fillStyle = '#333';
-                ctx.font = '11px monospace';
+                ctx.font = '10px monospace';
                 ctx.textAlign = 'center';
-                ctx.fillText('NO SIGNAL', w/2, h/2);
+                ctx.fillText('NO SIGNAL', W/2, H/2);
                 ctx.textAlign = 'left';
             }
             
             requestAnimationFrame(animateCRO);
         }
         
-        // ===== EVENTS =====
+        // EVENTS
         function events() {
-            document.querySelectorAll('.tray-comp').forEach(el => {
+            document.querySelectorAll('.tray-item').forEach(el => {
                 el.addEventListener('dragstart', e => {
-                    e.dataTransfer.setData('t', el.dataset.type);
-                    e.dataTransfer.setData('v', el.dataset.val);
+                    e.dataTransfer.setData('t', el.dataset.t);
+                    e.dataTransfer.setData('v', el.dataset.v);
                 });
             });
             
@@ -936,124 +850,121 @@
             cvs.addEventListener('dragover', e => { e.preventDefault(); });
             cvs.addEventListener('drop', e => {
                 e.preventDefault();
-                const type = e.dataTransfer.getData('t');
-                const val = parseFloat(e.dataTransfer.getData('v'));
+                const t = e.dataTransfer.getData('t');
+                const v = parseFloat(e.dataTransfer.getData('v'));
                 const rect = cvs.getBoundingClientRect();
-                raycaster.setFromCamera({
-                    x: ((e.clientX - rect.left) / rect.width) * 2 - 1,
-                    y: -((e.clientY - rect.top) / rect.height) * 2 + 1
-                }, camera);
-                const hit = raycaster.intersectObjects([board]);
-                if (hit.length > 0) place(type, val, hit[0].point.x, hit[0].point.z);
+                ray.setFromCamera({ x: ((e.clientX - rect.left) / rect.width) * 2 - 1, y: -((e.clientY - rect.top) / rect.height) * 2 + 1 }, cam);
+                const hit = ray.intersectObjects([board]);
+                if (hit.length > 0) place(t, v, hit[0].point.x, hit[0].point.z);
             });
             
-            cvs.addEventListener('mousedown', e => { isMouse = true; lx = e.clientX; ly = e.clientY; });
+            cvs.addEventListener('mousedown', e => { drg = true; lx = e.clientX; ly = e.clientY; });
             cvs.addEventListener('mousemove', e => {
-                if (!isMouse) return;
+                if (!drg) return;
                 ca += (e.clientX - lx) * 0.005;
                 ch = Math.max(3, Math.min(20, ch - (e.clientY - ly) * 0.03));
                 lx = e.clientX; ly = e.clientY;
                 upCam();
             });
-            cvs.addEventListener('mouseup', () => { isMouse = false; });
+            cvs.addEventListener('mouseup', () => { drg = false; });
             cvs.addEventListener('wheel', e => { cd = Math.max(5, Math.min(25, cd + e.deltaY * 0.01)); upCam(); });
             
-            document.querySelectorAll('.circuit-btn').forEach(b => {
+            document.querySelectorAll('.ckt-btn').forEach(b => {
                 b.addEventListener('click', () => {
-                    document.querySelectorAll('.circuit-btn').forEach(x => x.classList.remove('active'));
+                    document.querySelectorAll('.ckt-btn').forEach(x => x.classList.remove('active'));
                     b.classList.add('active');
-                    state.circuit = b.dataset.ckt;
-                    updateUI();
+                    S.ckt = b.dataset.c;
+                    ui();
                 });
             });
             
-            document.getElementById('r-sldr').addEventListener('input', e => {
-                state.r = parseInt(e.target.value) * 1000;
+            document.getElementById('r-sld').addEventListener('input', e => {
+                S.R = parseInt(e.target.value) * 1000;
                 document.getElementById('r-disp').textContent = e.target.value + 'KΩ';
-                updateUI();
+                ui();
             });
-            document.getElementById('l-sldr').addEventListener('input', e => {
-                state.l = parseInt(e.target.value) * 0.001;
-                document.getElementById('l-disp').textContent = e.target.value + 'mH';
-                updateUI();
-            });
-            document.getElementById('c-sldr').addEventListener('input', e => {
-                state.c = parseInt(e.target.value) * 0.000001;
+            document.getElementById('c-sld').addEventListener('input', e => {
+                S.C = parseInt(e.target.value) * 0.000001;
                 document.getElementById('c-disp').textContent = e.target.value + 'µF';
-                updateUI();
+                ui();
             });
-            document.getElementById('f-sldr').addEventListener('input', e => {
-                state.f = parseInt(e.target.value) * 100;
-                document.getElementById('f-disp').textContent = (parseInt(e.target.value) / 10).toFixed(1) + 'KHz';
-                updateUI();
+            document.getElementById('v-sld').addEventListener('input', e => {
+                S.Vcc = parseInt(e.target.value);
+                document.getElementById('v-disp').textContent = e.target.value + 'V';
+                ui();
+            });
+            document.getElementById('h-sld').addEventListener('input', e => {
+                S.Hfe = parseInt(e.target.value);
+                document.getElementById('h-disp').textContent = e.target.value;
+                ui();
             });
             
             window.addEventListener('resize', () => {
-                camera.aspect = window.innerWidth / window.innerHeight;
-                camera.updateProjectionMatrix();
-                renderer.setSize(window.innerWidth, window.innerHeight);
+                cam.aspect = w() / h();
+                cam.updateProjectionMatrix();
+                rdr.setSize(w(), h());
             });
         }
         
         function upCam() {
-            camera.position.x = Math.sin(ca) * cd;
-            camera.position.z = Math.cos(ca) * cd;
-            camera.position.y = ch;
-            camera.lookAt(0, 1, 0);
+            cam.pos.x = Math.sin(ca) * cd;
+            cam.pos.z = Math.cos(ca) * cd;
+            cam.pos.y = ch;
+            cam.lookAt(0, 1, 0);
         }
         
-        // ===== UI =====
-        function updateUI() {
+        // UI
+        function ui() {
             const r = calc();
-            document.getElementById('tau-r').textContent = r.tauRC > 1 ? (r.tauRC * 1000).toFixed(1) + ' ms' : (r.tauRC * 1000000).toFixed(1) + ' µs';
-            document.getElementById('fc-r').textContent = r.fcRC.toFixed(1) + ' Hz';
-            document.getElementById('fr-r').textContent = state.circuit.includes('rlc') ? r.fr.toFixed(1) + ' Hz' : '--';
-            document.getElementById('q-r').textContent = state.circuit.includes('rlc') ? r.Q.toFixed(2) : '--';
+            document.getElementById('tau').textContent = S.ckt.includes('rc') ? (r.tauRC * 1000).toFixed(1) + 'ms' : 'β=' + r.gain;
+            document.getElementById('fc').textContent = r.fc.toFixed(1) + 'Hz';
+            document.getElementById('gain').textContent = r.gain;
+            document.getElementById('vout').textContent = r.vout.toFixed(2) + 'V';
             
-            document.getElementById('run-btn').disabled = !canRun();
+            document.getElementById('run').disabled = !canRun();
             
-            const list = document.getElementById('placed-list');
+            const list = document.getElementById('placed');
             list.innerHTML = '';
-            state.placed.forEach((c, i) => {
-                let v = c.val;
-                if (c.type === 'resistor') v = (c.val / 1000) + 'K';
-                else if (c.type === 'inductor') v = (c.val * 1000) + 'm';
-                else if (c.type === 'capacitor') v = (c.val * 1000000) + 'µ';
-                else if (c.type === 'battery') v = c.val + 'V';
+            S.placed.forEach((p, i) => {
+                let v = p.v;
+                if (p.t === 'resistor') v = p.v / 1000 + 'K';
+                else if (p.t === 'capacitor') v = p.v * 1000000 + 'µ';
+                else if (p.t === 'battery') v = p.v + 'V';
                 
-                const icon = { resistor: '⚡', inductor: '🧲', capacitor: '🔋', led: '🔴', battery: '🔌', generator: '🎵' }[c.type] || '📦';
-                list.innerHTML += '<div class="placed-item"><span>' + icon + ' ' + c.type + ' ' + v + '</span><button class="btn-x" onclick="rem(' + i + ')">×</button></div>';
+                const ic = { resistor: '⚡', capacitor: '🔋', inductor: '🧲', led: '🔴', battery: '🔌', npn: '🔺', diode: '▶', zener: '◀', opamp: '🛢️' }[p.t] || '📦';
+                list.innerHTML += '<div class="placed-item"><span>' + ic + ' ' + p.t + ' ' + v + '</span><button class="btn-x" onclick="rem(' + i + ')">×</button></div>';
             });
         }
         
         function show(msg) {
-            const to = document.getElementById('toast');
-            to.textContent = msg;
-            to.classList.add('show');
-            setTimeout(() => to.classList.remove('show'), 2000);
+            const t = document.getElementById('toast');
+            t.textContent = msg;
+            t.classList.add('show');
+            setTimeout(() => t.classList.remove('show'), 2000);
         }
         
-        function toggleInfo() {
-            alert('ADVANCED ELECTRONICS LAB\n\nCircuits: RC, RL, RLC\nComponents: R, L, C, LED, Battery, Signal Gen\n\nDrag components to breadboard\nSelect circuit type\nClick Run to simulate');
+        function showHelp() {
+            alert('COMPLETE ELECTRONICS LAB\n\n★ Drag components to breadboard\n★ Select circuit type\n★ Adjust values with sliders\n★ Click Run to simulate\n\n★ Right-drag to rotate view\n★ Scroll to zoom');
+        }
+        
+        function showTheory() {
+            alert('CIRCUIT THEORY\n\n★ RC filter: fc = 1/(2πRC)\n★ RL filter: fc = R/(2πL)\n★ Time constant: τ = RC\n★ Cutoff at 63.2%\n\n★ NPN CE amp: Gain ~ β\n★ Zener regulates at Vz\n★ Op-amp: Gain = 1 + Rf/Rin');
         }
         
         function enterVR() {
             if (navigator.xr) {
                 navigator.xr.isSessionSupported('immersive-vr').then(s => {
-                    if (s) {
-                        alert('VR Mode: Open this page in Quest 3 browser at the HTTPS URL for immersive VR.');
-                    } else {
-                        show('VR not supported. Deploy to HTTPS first.');
-                    }
+                    if (s) alert('VR: Open this URL in Quest 3 browser');
+                    else show('Deploy to HTTPS first');
                 });
             } else {
-                show('WebXR not available. Open in Quest browser.');
+                show('Use Quest browser');
             }
         }
         
         function animate() {
             requestAnimationFrame(animate);
-            renderer.render(scene, camera);
+            rdr.render(scn, cam);
         }
         
         init();
