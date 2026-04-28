@@ -1,0 +1,1337 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Interactive Electronics Lab - RC Oscillator</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600&family=Space+Grotesk:wght@400;600;700&display=swap');
+        
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        
+        body {
+            font-family: 'Space Grotesk', sans-serif;
+            background: #0a0a0f;
+            color: #e0e0e0;
+            overflow: hidden;
+            height: 100vh;
+        }
+        
+        #canvas { width: 100%; height: 100%; display: block; }
+        
+        /* Top Bar */
+        .top-bar {
+            position: fixed;
+            top: 0; left: 0; right: 0;
+            padding: 16px 24px;
+            background: linear-gradient(180deg, rgba(10,10,15,0.95) 0%, transparent 100%);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            z-index: 100;
+        }
+        
+        .logo {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 18px;
+            font-weight: 600;
+            color: #00ff88;
+            letter-spacing: 1px;
+        }
+        
+        .mode-indicator {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 12px;
+            color: #666;
+        }
+        
+        .mode-dot {
+            width: 8px; height: 8px;
+            border-radius: 50%;
+            background: #333;
+        }
+        
+        .mode-dot.active {
+            background: #00ff88;
+            box-shadow: 0 0 10px #00ff88;
+            animation: pulse 2s infinite;
+        }
+        
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+        
+        /* Info Panels */
+        .panel {
+            position: fixed;
+            background: rgba(15,15,22,0.92);
+            border: 1px solid #2a2a35;
+            border-radius: 12px;
+            padding: 16px;
+            backdrop-filter: blur(12px);
+            z-index: 100;
+        }
+        
+        .panel-title {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 11px;
+            color: #666;
+            text-transform: uppercase;
+            letter-spacing: 1.5px;
+            margin-bottom: 12px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .panel-title::before {
+            content: '';
+            width: 3px; height: 12px;
+            background: linear-gradient(180deg, #00ff88, #0088ff);
+            border-radius: 2px;
+        }
+        
+        /* Component Panel - Left */
+        .component-panel {
+            top: 80px; left: 20px;
+            width: 200px;
+        }
+        
+        .component-item {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 10px 12px;
+            margin-bottom: 8px;
+            background: #1a1a24;
+            border: 1px solid #2a2a35;
+            border-radius: 8px;
+            cursor: grab;
+            transition: all 0.2s;
+        }
+        
+        .component-item:hover {
+            border-color: #00ff88;
+            background: #1f1f2a;
+        }
+        
+        .component-item:active {
+            cursor: grabbing;
+        }
+        
+        .component-item.placed {
+            border-color: #00ff88;
+            opacity: 0.6;
+        }
+        
+        .component-icon {
+            width: 32px; height: 32px;
+            border-radius: 6px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 16px;
+        }
+        
+        .component-icon.R { background: linear-gradient(135deg, #8B4513, #a0522d); }
+        .component-icon.C { background: linear-gradient(135deg, #4169E1, #1e40af); }
+        .component-icon.IC { background: linear-gradient(135deg, #333, #555); }
+        .component-icon.LED { background: linear-gradient(135deg, #222, #333); }
+        
+        .component-info { flex: 1; }
+        
+        .component-name {
+            font-size: 13px;
+            font-weight: 600;
+            color: #e0e0e0;
+        }
+        
+        .component-value {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 11px;
+            color: #00ff88;
+        }
+        
+        /* Circuit Status Panel - Right */
+        .circuit-panel {
+            top: 80px; right: 20px;
+            width: 220px;
+        }
+        
+        .circuit-item {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 8px 0;
+            border-bottom: 1px solid #222;
+        }
+        
+        .circuit-item:last-child { border-bottom: none; }
+        
+        .circuit-status {
+            width: 10px; height: 10px;
+            border-radius: 50%;
+            background: #333;
+            transition: all 0.3s;
+        }
+        
+        .circuit-status.connected {
+            background: #00ff88;
+            box-shadow: 0 0 12px #00ff88;
+        }
+        
+        .circuit-label {
+            font-size: 13px;
+            color: #888;
+        }
+        
+        .circuit-value {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 12px;
+            color: #0088ff;
+            margin-left: auto;
+        }
+        
+        /* CRO Panel - Bottom Left */
+        .cro-panel {
+            bottom: 100px; left: 20px;
+            width: 320px;
+        }
+        
+        .cro-display {
+            width: 100%;
+            height: 140px;
+            background: #000;
+            border: 2px solid #1a3a1a;
+            border-radius: 8px;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .cro-canvas {
+            width: 100%;
+            height: 100%;
+        }
+        
+        .cro-label {
+            position: absolute;
+            top: 8px; left: 12px;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 10px;
+            color: #00ff00;
+            opacity: 0.7;
+        }
+        
+        /* Formula Panel - Bottom Right */
+        .formula-panel {
+            bottom: 100px; right: 20px;
+            width: 240px;
+        }
+        
+        .formula-item {
+            margin-bottom: 12px;
+        }
+        
+        .formula-label {
+            font-size: 11px;
+            color: #555;
+            margin-bottom: 4px;
+        }
+        
+        .formula-value {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 16px;
+            font-weight: 600;
+            color: #00ff88;
+        }
+        
+        .formula-result {
+            font-size: 14px;
+            color: #0088ff;
+            margin-top: 2px;
+        }
+        
+        /* Bottom Controls */
+        .controls {
+            position: fixed;
+            bottom: 20px; left: 50%;
+            transform: translateX(-50%);
+            display: flex;
+            gap: 12px;
+            padding: 12px 20px;
+            background: rgba(15,15,22,0.9);
+            border: 1px solid #2a2a35;
+            border-radius: 16px;
+            z-index: 100;
+        }
+        
+        .btn {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 8px;
+            font-family: 'Space Grotesk', sans-serif;
+            font-size: 13px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .btn-primary {
+            background: linear-gradient(135deg, #00aa66, #00dd88);
+            color: #000;
+        }
+        
+        .btn-secondary {
+            background: #2a2a35;
+            color: #888;
+            border: 1px solid #3a3a45;
+        }
+        
+        .btn-secondary:hover {
+            background: #3a3a45;
+            color: #e0e0e0;
+        }
+        
+        .btn-ar {
+            background: linear-gradient(135deg, #0066aa, #0088dd);
+            color: #fff;
+        }
+        
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 16px rgba(0,255,136,0.2);
+        }
+        
+        /* Instructions */
+        .instructions {
+            position: fixed;
+            bottom: 80px;
+            left: 50%;
+            transform: translateX(-50%);
+            font-size: 12px;
+            color: #444;
+            text-align: center;
+        }
+        
+        /* Loading */
+        #loading {
+            position: fixed;
+            inset: 0;
+            background: #0a0a0f;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+        }
+        
+        .loader {
+            width: 60px; height: 60px;
+            border: 3px solid #1a1a24;
+            border-top-color: #00ff88;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+        
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+        
+        .loader-text {
+            margin-top: 16px;
+            font-size: 14px;
+            color: #444;
+        }
+        
+        /* AR Notice */
+        .ar-notice {
+            position: fixed;
+            top: 50%; left: 50%;
+            transform: translate(-50%, -50%);
+            background: rgba(0,20,10,0.95);
+            border: 2px solid #00ff88;
+            padding: 20px 40px;
+            border-radius: 12px;
+            font-size: 14px;
+            color: #00ff88;
+            display: none;
+            z-index: 200;
+        }
+        
+        .ar-notice.show { display: block; }
+    </style>
+</head>
+<body>
+    <div id="loading">
+        <div class="loader"></div>
+        <div class="loader-text">Building Electronics Lab...</div>
+    </div>
+    
+    <canvas id="canvas"></canvas>
+    
+    <!-- Top Bar -->
+    <div class="top-bar">
+        <div class="logo">⚡ ELECTRONICS LAB</div>
+        <div class="mode-indicator">
+            <span class="mode-dot active" id="modeDot"></span>
+            <span id="modeText">Interactive Mode</span>
+        </div>
+    </div>
+    
+    <!-- Component Panel -->
+    <div class="panel component-panel">
+        <div class="panel-title">Components</div>
+        
+        <div class="component-item" data-type="R" draggable="true">
+            <div class="component-icon R">⚡</div>
+            <div class="component-info">
+                <div class="component-name">Resistor</div>
+                <div class="component-value">10 KΩ</div>
+            </div>
+        </div>
+        
+        <div class="component-item" data-type="C" draggable="true">
+            <div class="component-icon C">🔋</div>
+            <div class="component-info">
+                <div class="component-name">Capacitor</div>
+                <div class="component-value">1 µF</div>
+            </div>
+        </div>
+        
+        <div class="component-item" data-type="IC" draggable="true">
+            <div class="component-icon IC">🔌</div>
+            <div class="component-info">
+                <div class="component-name">IC 741</div>
+                <div class="component-value">Op-Amp</div>
+            </div>
+        </div>
+        
+        <div class="component-item" data-type="LED" draggable="true">
+            <div class="component-icon LED">💡</div>
+            <div class="component-info">
+                <div class="component-name">LED</div>
+                <div class="component-value">Output</div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Circuit Status Panel -->
+    <div class="panel circuit-panel">
+        <div class="panel-title">Circuit Status</div>
+        
+        <div class="circuit-item">
+            <span class="circuit-status" id="status-R"></span>
+            <span class="circuit-label">R1 - Resistor</span>
+            <span class="circuit-value" id="value-R">--</span>
+        </div>
+        
+        <div class="circuit-item">
+            <span class="circuit-status" id="status-C"></span>
+            <span class="circuit-label">C1 - Capacitor</span>
+            <span class="circuit-value" id="value-C">--</span>
+        </div>
+        
+        <div class="circuit-item">
+            <span class="circuit-status" id="status-IC"></span>
+            <span class="circuit-label">U1 - Op-Amp</span>
+            <span class="circuit-value" id="value-IC">--</span>
+        </div>
+        
+        <div class="circuit-item">
+            <span class="circuit-status" id="status-LED"></span>
+            <span class="circuit-label">D1 - LED</span>
+            <span class="circuit-value" id="value-LED">--</span>
+        </div>
+    </div>
+    
+    <!-- CRO Panel -->
+    <div class="panel cro-panel">
+        <div class="panel-title">CRO Output</div>
+        <div class="cro-display">
+            <canvas class="cro-canvas" id="croCanvas"></canvas>
+            <span class="cro-label">OSCILLOSCOPE</span>
+        </div>
+    </div>
+    
+    <!-- Formula Panel -->
+    <div class="panel formula-panel">
+        <div class="panel-title">RC Oscillator</div>
+        
+        <div class="formula-item">
+            <div class="formula-label">Resistor (R)</div>
+            <div class="formula-value" id="formula-R">10 KΩ</div>
+        </div>
+        
+        <div class="formula-item">
+            <div class="formula-label">Capacitor (C)</div>
+            <div class="formula-value" id="formula-C">1 µF</div>
+        </div>
+        
+        <div class="formula-item">
+            <div class="formula-label">Time Constant (τ = R × C)</div>
+            <div class="formula-value" id="formula-tau">10 ms</div>
+            <div class="formula-result" id="result-tau">τ = 10 × 10⁻³</div>
+        </div>
+        
+        <div class="formula-item">
+            <div class="formula-label">Frequency (f = 1 / 2π√6RC)</div>
+            <div class="formula-value" id="formula-freq">26.5 Hz</div>
+            <div class="formula-result" id="result-freq">f ≈ 1 / 2π√6 × 10 × 10⁻³</div>
+        </div>
+    </div>
+    
+    <!-- Controls -->
+    <div class="controls">
+        <button class="btn btn-primary" onclick="resetAll()">🔄 Reset</button>
+        <button class="btn btn-secondary" onclick="calculateCircuit()">🧮 Calculate</button>
+        <button class="btn btn-ar" onclick="enterAR()">🥽 AR Mode</button>
+    </div>
+    
+    <!-- Instructions -->
+    <div class="instructions">
+        Drag components to breadboard • Complete circuit to see oscillator output
+    </div>
+    
+    <!-- AR Notice -->
+    <div class="ar-notice" id="arNotice">🔍 Scanning for surfaces...</div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script>
+        // ===== INTERACTIVE ELECTRONICS LAB =====
+        
+        let scene, camera, renderer, clock;
+        let components = {};
+        let circuit = { R: false, C: false, IC: false, LED: false };
+        let osc = { R: 10, C: 1, tau: 0.01, freq: 26.53 };
+        let raycaster, mouse;
+        let dragging = null;
+        let croCanvas, croCtx;
+        let reticle;
+        
+        const COLORS = {
+            bg: 0x0a0a0f,
+            primary: 0x00ff88,
+            accent: 0x0088ff,
+            green: 0x00ff00,
+            red: 0xff4444,
+            blue: 0x4466ff,
+            breadboard: 0x0a0a0a,
+            table: 0x15151a
+        };
+        
+        function init() {
+            // Scene
+            scene = new THREE.Scene();
+            scene.background = new THREE.Color(COLORS.bg);
+            scene.fog = new THREE.Fog(COLORS.bg, 8, 25);
+            
+            // Camera
+            camera = new THREE.PerspectiveCamera(65, innerWidth/innerHeight, 0.01, 50);
+            camera.position.set(0, 4, 7);
+            
+            // Renderer
+            renderer = new THREE.WebGLRenderer({ 
+                canvas: document.getElementById('canvas'), 
+                antialias: true,
+                alpha: true 
+            });
+            renderer.setSize(innerWidth, innerHeight);
+            renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
+            renderer.xr.enabled = true;
+            renderer.shadowMap.enabled = true;
+            renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+            
+            // Check AR support
+            if (navigator.xr) {
+                navigator.xr.isSessionSupported('immersive-ar').then(supported => {
+                    if (!supported) {
+                        document.querySelector('.btn-ar').style.opacity = '0.5';
+                        document.querySelector('.btn-ar').style.pointerEvents = 'none';
+                    }
+                });
+            }
+            
+            // Lights
+            const ambient = new THREE.AmbientLight(0xffffff, 0.4);
+            scene.add(ambient);
+            
+            const mainLight = new THREE.DirectionalLight(0xffffff, 0.8);
+            mainLight.position.set(5, 10, 5);
+            mainLight.castShadow = true;
+            mainLight.shadow.mapSize.width = 2048;
+            mainLight.shadow.mapSize.height = 2048;
+            scene.add(mainLight);
+            
+            const accentLight = new THREE.PointLight(0x00ff88, 0.3, 15);
+            accentLight.position.set(-3, 3, 2);
+            scene.add(accentLight);
+            
+            // Lab Environment
+            createLab();
+            createMainTable();
+            createBreadboard();
+            createComponents();
+            createCRO();
+            createOscillatorTable();
+            
+            // Interactions
+            raycaster = new THREE.Raycaster();
+            mouse = new THREE.Vector2();
+            
+            setupDragDrop();
+            setupCanvasEvents();
+            
+            // CRO Canvas
+            croCanvas = document.getElementById('croCanvas');
+            croCtx = croCanvas.getContext('2d');
+            croCanvas.width = 300;
+            croCanvas.height = 130;
+            
+            clock = new THREE.Clock();
+            renderer.setAnimationLoop(animate);
+            
+            // Hide loading
+            setTimeout(() => {
+                document.getElementById('loading').style.display = 'none';
+            }, 1500);
+        }
+        
+        function createLab() {
+            // Floor
+            const floor = new THREE.Mesh(
+                new THREE.PlaneGeometry(15, 15),
+                new THREE.MeshStandardMaterial({ color: 0x080810, roughness: 0.9 })
+            );
+            floor.rotation.x = -Math.PI/2;
+            floor.receiveShadow = true;
+            floor.name = 'floor';
+            scene.add(floor);
+            
+            // Grid
+            const grid = new THREE.GridHelper(15, 40, 0x1a1a24, 0x101018);
+            scene.add(grid);
+            
+            // Back panel
+            const panel = new THREE.Mesh(
+                new THREE.PlaneGeometry(10, 3),
+                new THREE.MeshStandardMaterial({ color: 0x0c0c12 })
+            );
+            panel.position.set(0, 3, -5);
+            scene.add(panel);
+            
+            // Title on wall
+            createWallText('⚡ RC OSCILLATOR LAB', 0, 4, -4.9);
+        }
+        
+        function createWallText(text, x, y, z) {
+            const canvas = document.createElement('canvas');
+            canvas.width = 512; canvas.height = 128;
+            const ctx = canvas.getContext('2d');
+            ctx.fillStyle = '#0c0c12';
+            ctx.fillRect(0, 0, 512, 128);
+            ctx.font = 'bold 36px JetBrains Mono';
+            ctx.fillStyle = '#00ff88';
+            ctx.textAlign = 'center';
+            ctx.fillText(text, 256, 75);
+            
+            const texture = new THREE.CanvasTexture(canvas);
+            const mat = new THREE.MeshBasicMaterial({ map: texture, transparent: true });
+            const mesh = new THREE.Mesh(new THREE.PlaneGeometry(6, 1.5), mat);
+            mesh.position.set(x, y, z);
+            scene.add(mesh);
+        }
+        
+        function createMainTable() {
+            // Table top
+            const table = new THREE.Mesh(
+                new THREE.BoxGeometry(5, 0.08, 2.5),
+                new THREE.MeshStandardMaterial({ color: COLORS.table, roughness: 0.3, metalness: 0.2 })
+            );
+            table.position.set(0, 1, 0);
+            table.castShadow = true;
+            table.receiveShadow = true;
+            scene.add(table);
+            
+            // Table legs
+            const legGeo = new THREE.CylinderGeometry(0.04, 0.04, 1, 8);
+            const legMat = new THREE.MeshStandardMaterial({ color: 0x2a2a2a, metalness: 0.5 });
+            
+            [[-2.2, -1], [2.2, -1], [-2.2, 1], [2.2, 1]].forEach(([x, z]) => {
+                const leg = new THREE.Mesh(legGeo, legMat);
+                leg.position.set(x, 0.5, z);
+                scene.add(leg);
+            });
+            
+            // Edge strip
+            const strip = new THREE.Mesh(
+                new THREE.BoxGeometry(5.1, 0.015, 0.05),
+                new THREE.MeshStandardMaterial({ 
+                    color: COLORS.primary, 
+                    emissive: COLORS.primary, 
+                    emissiveIntensity: 0.5 
+                })
+            );
+            strip.position.set(0, 1.05, 1.23);
+            scene.add(strip);
+        }
+        
+        function createBreadboard() {
+            const bb = new THREE.Group();
+            bb.name = 'breadboard';
+            
+            // Main body
+            const body = new THREE.Mesh(
+                new THREE.BoxGeometry(2, 0.1, 1),
+                new THREE.MeshStandardMaterial({ color: COLORS.breadboard })
+            );
+            bb.add(body);
+            
+            // Power rails
+            const redRail = new THREE.Mesh(
+                new THREE.BoxGeometry(1.8, 0.04, 0.04),
+                new THREE.MeshStandardMaterial({ color: 0xff3333, emissive: 0xff3333, emissiveIntensity: 0.3 })
+            );
+            redRail.position.set(0, 0.08, 0.4);
+            bb.add(redRail);
+            
+            const blueRail = new THREE.Mesh(
+                new THREE.BoxGeometry(1.8, 0.04, 0.04),
+                new THREE.MeshStandardMaterial({ color: 0x3333ff, emissive: 0x3333ff, emissiveIntensity: 0.3 })
+            );
+            blueRail.position.set(0, 0.08, -0.4);
+            bb.add(blueRail);
+            
+            // Socket holes
+            const holeMat = new THREE.MeshBasicMaterial({ color: 0x050505 });
+            for (let row = 0; row < 8; row++) {
+                for (let col = 0; col < 4; col++) {
+                    const hole = new THREE.Mesh(
+                        new THREE.CircleGeometry(0.015, 8),
+                        holeMat
+                    );
+                    hole.rotation.x = -Math.PI/2;
+                    hole.position.set(-0.8 + col * 0.2, 0.06, -0.35 + row * 0.1);
+                    bb.add(hole);
+                }
+            }
+            
+            // Center divider
+            const divider = new THREE.Mesh(
+                new THREE.BoxGeometry(0.06, 0.08, 0.9),
+                new THREE.MeshStandardMaterial({ color: 0x1a1a1a })
+            );
+            bb.add(divider);
+            
+            // Label
+            const labelCanvas = document.createElement('canvas');
+            labelCanvas.width = 256; labelCanvas.height = 32;
+            const ctx = labelCanvas.getContext('2d');
+            ctx.fillStyle = '#1a1a1a';
+            ctx.fillRect(0, 0, 256, 32);
+            ctx.font = 'bold 16px JetBrains Mono';
+            ctx.fillStyle = '#666';
+            ctx.fillText('BREADBOARD', 128, 22);
+            
+            const labelTex = new THREE.CanvasTexture(labelCanvas);
+            const label = new THREE.Mesh(
+                new THREE.PlaneGeometry(1.2, 0.15),
+                new THREE.MeshBasicMaterial({ map: labelTex, transparent: true })
+            );
+            label.position.set(0, -0.02, 0);
+            label.rotation.x = -Math.PI/2;
+            bb.add(label);
+            
+            bb.position.set(0, 1.05, 0);
+            scene.add(bb);
+        }
+        
+        function createComponents() {
+            // Component starting positions on table
+            const positions = {
+                R: new THREE.Vector3(-1.8, 1.15, 0.6),
+                C: new THREE.Vector3(-1.2, 1.15, 0.6),
+                IC: new THREE.Vector3(1.5, 1.15, 0.4),
+                LED: new THREE.Vector3(1.5, 1.15, -0.4)
+            };
+            
+            const snapPositions = {
+                R: new THREE.Vector3(-0.6, 1.11, -0.25),
+                C: new THREE.Vector3(-0.3, 1.11, -0.1),
+                IC: new THREE.Vector3(0, 1.11, 0.1),
+                LED: new THREE.Vector3(0.3, 1.11, 0.25)
+            };
+            
+            // Resistor
+            const R = new THREE.Group();
+            R.userData = { type: 'R', home: positions.R.clone(), snap: snapPositions.R.clone(), placed: false };
+            
+            const rBody = new THREE.Mesh(
+                new THREE.CylinderGeometry(0.06, 0.06, 0.4, 16),
+                new THREE.MeshStandardMaterial({ color: 0x8B4513 })
+            );
+            rBody.rotation.z = Math.PI/2;
+            R.add(rBody);
+            
+            // Color bands
+            [[0x8B4513, -0.15], [COLORS.primary, -0.05], [0x0088ff, 0.05]].forEach(([color, x]) => {
+                const band = new THREE.Mesh(
+                    new THREE.CylinderGeometry(0.065, 0.065, 0.03, 16),
+                    new THREE.MeshStandardMaterial({ color })
+                );
+                band.rotation.z = Math.PI/2;
+                band.position.x = x;
+                R.add(band);
+            });
+            
+            R.position.copy(positions.R);
+            R.name = 'R';
+            components.R = R;
+            scene.add(R);
+            
+            // Capacitor
+            const C = new THREE.Group();
+            C.userData = { type: 'C', home: positions.C.clone(), snap: snapPositions.C.clone(), placed: false };
+            
+            const cBody = new THREE.Mesh(
+                new THREE.CylinderGeometry(0.12, 0.12, 0.25, 16),
+                new THREE.MeshStandardMaterial({ color: 0x4169E1 })
+            );
+            C.add(cBody);
+            
+            const cTop = new THREE.Mesh(
+                new THREE.CylinderGeometry(0.15, 0.15, 0.04, 16),
+                new THREE.MeshStandardMaterial({ color: 0x888 })
+            );
+            cTop.position.y = 0.13;
+            C.add(cTop);
+            
+            C.position.copy(positions.C);
+            C.name = 'C';
+            components.C = C;
+            scene.add(C);
+            
+            // IC 741
+            const IC = new THREE.Group();
+            IC.userData = { type: 'IC', home: positions.IC.clone(), snap: snapPositions.IC.clone(), placed: false };
+            
+            const icBody = new THREE.Mesh(
+                new THREE.BoxGeometry(0.5, 0.08, 0.25),
+                new THREE.MeshStandardMaterial({ color: 0x1a1a1a })
+            );
+            IC.add(icBody);
+            
+            // Pins
+            for (let i = 0; i < 8; i++) {
+                const pin = new THREE.Mesh(
+                    new THREE.BoxGeometry(0.02, 0.05, 0.015),
+                    new THREE.MeshStandardMaterial({ color: 0xaaa })
+                );
+                pin.position.set(-0.2 + i * 0.055, -0.04, 0);
+                IC.add(pin);
+            }
+            
+            // Dot marker
+            const dot = new THREE.Mesh(
+                new THREE.CircleGeometry(0.025, 16),
+                new THREE.MeshBasicMaterial({ color: COLORS.primary })
+            );
+            dot.position.set(0, 0.041, -0.08);
+            IC.add(dot);
+            
+            IC.position.copy(positions.IC);
+            IC.name = 'IC';
+            components.IC = IC;
+            scene.add(IC);
+            
+            // LED
+            const LED = new THREE.Group();
+            LED.userData = { type: 'LED', home: positions.LED.clone(), snap: snapPositions.LED.clone(), placed: false };
+            
+            const ledBody = new THREE.Mesh(
+                new THREE.CylinderGeometry(0.08, 0.08, 0.25, 16),
+                new THREE.MeshStandardMaterial({ color: 0x222, emissive: COLORS.green, emissiveIntensity: 0 })
+            );
+            ledBody.name = 'led-body';
+            LED.add(ledBody);
+            
+            const ledDome = new THREE.Mesh(
+                new THREE.SphereGeometry(0.08, 16, 8, 0, Math.PI*2, 0, Math.PI/2),
+                new THREE.MeshStandardMaterial({ 
+                    color: COLORS.green, 
+                    transparent: true, 
+                    opacity: 0.7,
+                    emissive: COLORS.green, 
+                    emissiveIntensity: 0 
+                })
+            );
+            ledDome.name = 'led-dome';
+            ledDome.position.y = 0.12;
+            LED.add(ledDome);
+            
+            LED.position.copy(positions.LED);
+            LED.name = 'LED';
+            components.LED = LED;
+            scene.add(LED);
+        }
+        
+        function createCRO() {
+            const cro = new THREE.Group();
+            
+            // Body
+            const body = new THREE.Mesh(
+                new THREE.BoxGeometry(1.4, 0.9, 0.12),
+                new THREE.MeshStandardMaterial({ color: 0x15151a })
+            );
+            cro.add(body);
+            
+            // Screen
+            const screen = new THREE.Mesh(
+                new THREE.PlaneGeometry(1.15, 0.7),
+                new THREE.MeshBasicMaterial({ color: 0x000800 })
+            );
+            screen.position.set(0, 0.08, 0.07);
+            screen.name = 'cro-screen';
+            cro.add(screen);
+            
+            // Grid
+            const gridMat = new THREE.LineBasicMaterial({ color: 0x002200, transparent: true, opacity: 0.5 });
+            for (let i = 0; i < 4; i++) {
+                const vLine = new THREE.Line(
+                    new THREE.BufferGeometry().setFromPoints([
+                        new THREE.Vector3(-0.5 + i * 0.25, -0.3, 0),
+                        new THREE.Vector3(-0.5 + i * 0.25, 0.3, 0)
+                    ]),
+                    gridMat
+                );
+                vLine.position.z = 0.08;
+                cro.add(vLine);
+            }
+            for (let i = 0; i < 3; i++) {
+                const hLine = new THREE.Line(
+                    new THREE.BufferGeometry().setFromPoints([
+                        new THREE.Vector3(-0.5, -0.25 + i * 0.25, 0),
+                        new THREE.Vector3(0.5, -0.25 + i * 0.25, 0)
+                    ]),
+                    gridMat
+                );
+                hLine.position.z = 0.08;
+                cro.add(hLine);
+            }
+            
+            // Waveform
+            const wavePts = [];
+            for (let i = 0; i < 60; i++) {
+                wavePts.push(new THREE.Vector3(-0.5 + i * 0.017, 0, 0));
+            }
+            const waveGeo = new THREE.BufferGeometry().setFromPoints(wavePts);
+            const waveMat = new THREE.LineBasicMaterial({ color: COLORS.green });
+            const wave = new THREE.Line(waveGeo, waveMat);
+            wave.position.z = 0.08;
+            wave.name = 'cro-wave';
+            cro.add(wave);
+            
+            // Glow effect
+            const glow = new THREE.PointLight(COLORS.green, 0.2, 1);
+            glow.position.set(0, 0.08, 0.3);
+            cro.add(glow);
+            
+            // Knobs
+            for (let i = 0; i < 3; i++) {
+                const knob = new THREE.Mesh(
+                    new THREE.CylinderGeometry(0.04, 0.04, 0.04, 16),
+                    new THREE.MeshStandardMaterial({ color: 0x333 })
+                );
+                knob.position.set(-0.5 + i * 0.15, -0.35, 0.07);
+                cro.add(knob);
+            }
+            
+            // Label
+            const labelCanvas = document.createElement('canvas');
+            labelCanvas.width = 256; labelCanvas.height = 32;
+            const ctx = labelCanvas.getContext('2d');
+            ctx.fillStyle = '#1a1a1a';
+            ctx.fillRect(0, 0, 256, 32);
+            ctx.font = 'bold 14px JetBrains Mono';
+            ctx.fillStyle = '#00ff00';
+            ctx.fillText('OSCILLOSCOPE', 128, 22);
+            
+            const labelTex = new THREE.CanvasTexture(labelCanvas);
+            const label = new THREE.Mesh(
+                new THREE.PlaneGeometry(0.8, 0.1),
+                new THREE.MeshBasicMaterial({ map: labelTex, transparent: true })
+            );
+            label.position.set(0, -0.38, 0.07);
+            cro.add(label);
+            
+            cro.position.set(1.8, 1.5, -0.5);
+            cro.rotation.x = -0.15;
+            cro.name = 'cro';
+            scene.add(cro);
+        }
+        
+        function createOscillatorTable() {
+            // Second table for sample oscillator
+            const table = new THREE.Mesh(
+                new THREE.BoxGeometry(1.8, 0.06, 1.2),
+                new THREE.MeshStandardMaterial({ color: 0x101015 })
+            );
+            table.position.set(-2, 1, -0.8);
+            scene.add(table);
+            
+            // Circuit diagram on table
+            const canvas = document.createElement('canvas');
+            canvas.width = 400; canvas.height = 300;
+            const ctx = canvas.getContext('2d');
+            
+            // Background
+            ctx.fillStyle = '#080808';
+            ctx.fillRect(0, 0, 400, 300);
+            
+            // Grid
+            ctx.strokeStyle = '#1a1a1a';
+            ctx.lineWidth = 1;
+            for (let x = 0; x < 400; x += 20) {
+                ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, 300); ctx.stroke();
+            }
+            for (let y = 0; y < 300; y += 20) {
+                ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(400, y); ctx.stroke();
+            }
+            
+            // Circuit schematic
+            ctx.strokeStyle = '#446688';
+            ctx.lineWidth = 2;
+            
+            // Input section
+            ctx.beginPath();
+            ctx.moveTo(50, 150); ctx.lineTo(100, 150);
+            ctx.stroke();
+            
+            // Resistor
+            ctx.fillStyle = '#8B4513';
+            ctx.fillRect(100, 140, 20, 20);
+            ctx.fillStyle = '#888';
+            ctx.font = '12px JetBrains Mono';
+            ctx.fillText('R1', 105, 180);
+            
+            // Capacitor
+            ctx.strokeStyle = '#446688';
+            ctx.beginPath();
+            ctx.arc(170, 150, 15, -Math.PI/2, Math.PI/2);
+            ctx.stroke();
+            ctx.beginPath();
+            ctx.arc(170, 150, 15, Math.PI/2, -Math.PI/2);
+            ctx.stroke();
+            ctx.fillStyle = '#888';
+            ctx.fillText('C1', 160, 180);
+            
+            // Op-Amp triangle
+            ctx.fillStyle = '#333';
+            ctx.beginPath();
+            ctx.moveTo(230, 120);
+            ctx.lineTo(230, 180);
+            ctx.lineTo(270, 150);
+            ctx.closePath();
+            ctx.fill();
+            ctx.fillStyle = '#888';
+            ctx.fillText('U1', 235, 200);
+            
+            // Output
+            ctx.strokeStyle = '#00ff00';
+            ctx.beginPath();
+            ctx.moveTo(270, 150); ctx.lineTo(320, 150);
+            ctx.stroke();
+            
+            // Sine wave output
+            ctx.strokeStyle = '#00ff00';
+            ctx.lineWidth = 2;
+            ctx.beginPath();
+            for (let x = 0; x < 60; x++) {
+                const y = 240 + Math.sin(x * 0.3) * 30;
+                x === 0 ? ctx.moveTo(50 + x * 4, y) : ctx.lineTo(50 + x * 4, y);
+            }
+            ctx.stroke();
+            
+            // Labels
+            ctx.fillStyle = '#00ff88';
+            ctx.font = 'bold 14px JetBrains Mono';
+            ctx.fillText('SAMPLE RC OSCILLATOR', 200, 30);
+            
+            ctx.fillStyle = '#666';
+            ctx.font = '11px JetBrains Mono';
+            ctx.fillText('f = 1 / 2π√6RC ≈ 26.5 Hz', 200, 270);
+            ctx.fillText('R = 10KΩ, C = 1µF', 200, 285);
+            
+            const tex = new THREE.CanvasTexture(canvas);
+            const diagram = new THREE.Mesh(
+                new THREE.PlaneGeometry(1.6, 1.1),
+                new THREE.MeshBasicMaterial({ map: tex })
+            );
+            diagram.position.set(-2, 1.04, -0.78);
+            diagram.rotation.x = -Math.PI/2 - 0.2;
+            scene.add(diagram);
+        }
+        
+        // ===== DRAG AND DROP =====
+        
+        function setupDragDrop() {
+            const items = document.querySelectorAll('.component-item');
+            
+            items.forEach(item => {
+                item.addEventListener('dragstart', e => {
+                    e.dataTransfer.setData('type', item.dataset.type);
+                });
+                
+                item.addEventListener('click', () => {
+                    const type = item.dataset.type;
+                    if (components[type]) {
+                        const comp = components[type];
+                        if (comp.userData.placed) {
+                            // Return to home
+                            comp.position.copy(comp.userData.home);
+                            comp.userData.placed = false;
+                            circuit[type] = false;
+                            item.classList.remove('placed');
+                            updateCircuitUI();
+                        }
+                    }
+                });
+            });
+        }
+        
+        function setupCanvasEvents() {
+            const canvas = renderer.domElement;
+            
+            canvas.addEventListener('pointerdown', onPointerDown);
+            canvas.addEventListener('pointermove', onPointerMove);
+            canvas.addEventListener('pointerup', onPointerUp);
+            
+            window.addEventListener('resize', onResize);
+        }
+        
+        function onPointerDown(e) {
+            mouse.x = (e.clientX / innerWidth) * 2 - 1;
+            mouse.y = -(e.clientY / innerHeight) * 2 + 1;
+            
+            raycaster.setFromCamera(mouse, camera);
+            const hits = raycaster.intersectObjects(Object.values(components));
+            
+            for (let hit of hits) {
+                let obj = hit.object;
+                while (obj.parent && !obj.userData.type) obj = obj.parent;
+                
+                if (obj.userData.type) {
+                    dragging = obj;
+                    break;
+                }
+            }
+        }
+        
+        function onPointerMove(e) {
+            if (!dragging) return;
+            
+            mouse.x = (e.clientX / innerWidth) * 2 - 1;
+            mouse.y = -(e.clientY / innerHeight) * 2 + 1;
+            
+            raycaster.setFromCamera(mouse, camera);
+            const point = new THREE.Vector3();
+            raycaster.ray.intersectPlane(new THREE.Plane(new THREE.Vector3(0, 1, 0), -1.05), point);
+            
+            dragging.position.x = Math.max(-3, Math.min(3, point.x));
+            dragging.position.z = Math.max(-2, Math.min(2, point.z));
+        }
+        
+        function onPointerUp() {
+            if (!dragging) return;
+            
+            const type = dragging.userData.type;
+            const pos = dragging.position;
+            
+            // Check if on breadboard
+            const onBB = pos.x > -1.2 && pos.x < 1.2 && pos.z > -0.6 && pos.z < 0.6;
+            
+            if (onBB) {
+                // Snap to position
+                dragging.position.copy(dragging.userData.snap);
+                dragging.userData.placed = true;
+                circuit[type] = true;
+                
+                // Update UI
+                document.querySelector(`[data-type="${type}"]`).classList.add('placed');
+            } else {
+                // Return home
+                dragging.position.copy(dragging.userData.home);
+                dragging.userData.placed = false;
+                circuit[type] = false;
+                
+                document.querySelector(`[data-type="${type}"]`).classList.remove('placed');
+            }
+            
+            updateCircuitUI();
+            calculateCircuit();
+            dragging = null;
+        }
+        
+        function updateCircuitUI() {
+            ['R', 'C', 'IC', 'LED'].forEach(type => {
+                const status = document.getElementById(`status-${type}`);
+                const value = document.getElementById(`value-${type}`);
+                
+                if (circuit[type]) {
+                    status.classList.add('connected');
+                    const values = { R: '10KΩ', C: '1µF', IC: 'Installed', LED: 'Active' };
+                    value.textContent = values[type];
+                } else {
+                    status.classList.remove('connected');
+                    value.textContent = '--';
+                }
+            });
+        }
+        
+        function calculateCircuit() {
+            if (circuit.R && circuit.C) {
+                osc.tau = osc.R * osc.C; // ms
+                osc.freq = 1 / (2 * Math.PI * Math.sqrt(6) * osc.R * osc.C);
+                
+                document.getElementById('formula-tau').textContent = osc.tau.toFixed(1) + ' ms';
+                document.getElementById('result-tau').textContent = `τ = ${osc.R} × ${osc.C} × 10⁻³`;
+                
+                document.getElementById('formula-freq').textContent = osc.freq.toFixed(1) + ' Hz';
+                document.getElementById('result-freq').textContent = `f ≈ 1 / 2π√6 × ${osc.R} × 10⁻³`;
+            }
+        }
+        
+        function resetAll() {
+            Object.values(components).forEach(comp => {
+                comp.position.copy(comp.userData.home);
+                comp.userData.placed = false;
+            });
+            
+            circuit = { R: false, C: false, IC: false, LED: false };
+            
+            document.querySelectorAll('.component-item').forEach(item => {
+                item.classList.remove('placed');
+            });
+            
+            updateCircuitUI();
+        }
+        
+        function onResize() {
+            camera.aspect = innerWidth / innerHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(innerWidth, innerHeight);
+        }
+        
+        async function enterAR() {
+            const notice = document.getElementById('arNotice');
+            notice.classList.add('show');
+            
+            if (navigator.xr) {
+                try {
+                    const session = await navigator.xr.requestSession('immersive-ar', {
+                        requiredFeatures: ['local-floor', 'hit-test']
+                    });
+                    renderer.xr.setSession(session);
+                    
+                    document.getElementById('modeText').textContent = 'AR Mode';
+                    document.getElementById('modeDot').style.background = '#0088ff';
+                    document.getElementById('modeDot').style.boxShadow = '0 0 10px #0088ff';
+                    
+                    notice.classList.remove('show');
+                } catch(e) {
+                    console.log('AR not available');
+                    notice.textContent = 'AR not supported on this device';
+                    setTimeout(() => notice.classList.remove('show'), 2000);
+                }
+            }
+        }
+        
+        // ===== ANIMATION LOOP =====
+        
+        function animate() {
+            const t = clock.getElapsedTime();
+            
+            // LED blink when circuit complete
+            if (circuit.R && circuit.C && circuit.LED) {
+                const phase = (t * osc.freq * Math.PI * 2) % (Math.PI * 2);
+                const on = Math.sin(phase) > 0;
+                
+                if (components.LED) {
+                    const body = components.LED.children.find(c => c.name === 'led-body');
+                    const dome = components.LED.children.find(c => c.name === 'led-dome');
+                    if (body) body.material.emissiveIntensity = on ? 0.9 : 0;
+                    if (dome) dome.material.emissiveIntensity = on ? 0.6 : 0;
+                }
+            }
+            
+            // Camera orbit
+            camera.position.x = Math.sin(t * 0.08) * 7;
+            camera.position.z = Math.cos(t * 0.08) * 7;
+            camera.lookAt(0, 1, 0);
+            
+            // Draw CRO
+            drawCRO(t);
+            
+            renderer.render(scene, camera);
+        }
+        
+        function drawCRO(t) {
+            if (!croCtx) return;
+            
+            const w = croCanvas.width;
+            const h = croCanvas.height;
+            
+            // Background
+            croCtx.fillStyle = '#000800';
+            croCtx.fillRect(0, 0, w, h);
+            
+            // Grid
+            croCtx.strokeStyle = '#001a00';
+            croCtx.lineWidth = 1;
+            for (let i = 0; i < 8; i++) {
+                croCtx.beginPath();
+                croCtx.moveTo(i * w/8, 0);
+                croCtx.lineTo(i * w/8, h);
+                croCtx.stroke();
+            }
+            for (let i = 0; i < 6; i++) {
+                croCtx.beginPath();
+                croCtx.moveTo(0, i * h/6);
+                croCtx.lineTo(w, i * h/6);
+                croCtx.stroke();
+            }
+            
+            // Waveform
+            if (circuit.R && circuit.C) {
+                croCtx.strokeStyle = '#00ff00';
+                croCtx.lineWidth = 2;
+                croCtx.beginPath();
+                
+                const freq = circuit.LED ? 0.15 : 0.05;
+                for (let x = 0; x < w; x++) {
+                    const y = h/2 + Math.sin((x/w) * Math.PI * 2 * 5 + t * osc.freq * 0.2) * (h * 0.35);
+                    x === 0 ? croCtx.moveTo(x, y) : croCtx.lineTo(x, y);
+                }
+                croCtx.stroke();
+                
+                // Frequency label
+                croCtx.fillStyle = '#00ff00';
+                croCtx.font = '11px JetBrains Mono';
+                croCtx.fillText(`f = ${osc.freq.toFixed(1)} Hz`, 10, 20);
+            } else {
+                croCtx.fillStyle = '#333';
+                croCtx.font = '12px JetBrains Mono';
+                croCtx.fillText('NO SIGNAL', w/2 - 40, h/2);
+            }
+        }
+        
+        // Initialize
+        init();
+    </script>
+</body>
+</html>
