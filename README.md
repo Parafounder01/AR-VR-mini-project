@@ -276,7 +276,7 @@ MIT License
 
 - **Three.js** - 3D Rendering
 - **WebXR API** - VR/AR Support  
-- **Pavithra AI Agent** - Development
+- **Anantha kumar** - Development
 
 ---
 
