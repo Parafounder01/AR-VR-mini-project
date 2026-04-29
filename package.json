@@ -1,0 +1,29 @@
+{
+  "name": "webxr-electronics-lab",
+  "version": "1.0.0",
+  "description": "WebXR Electronics 3D Lab — CRO & AFO Interactive VR Environment for Oculus Quest 2/3",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "keywords": [
+    "webxr",
+    "a-frame",
+    "three.js",
+    "oculus",
+    "quest",
+    "vr",
+    "ar",
+    "oscilloscope",
+    "electronics"
+  ],
+  "author": "",
+  "license": "MIT",
+  "dependencies": {
+    "express": "^4.22.1"
+  },
+  "devDependencies": {
+    "mkcert": "^3.2.0",
+    "selfsigned": "^5.5.0"
+  }
+}
