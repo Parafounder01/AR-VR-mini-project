@@ -10,7 +10,7 @@
 
 **URL:** https://Parafounder01.github.io/AR-VR-mini-project/
 
-Open this URL in Meta Quest 2/3 browser for VR/AR mode, or on desktop for mouse controls.
+Open this URL in Meta Quest 2/3 browser for VR/AR mode.
 
 ---
 
